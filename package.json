@@ -8,12 +8,32 @@
     "eject": "expo eject"
   },
   "dependencies": {
-    "expo": "~42.0.1",
-    "expo-status-bar": "~1.0.4",
+    "@expo/ngrok": "^4.1.0",
+    "@expo/vector-icons": "^12.0.0",
+    "@react-native-community/masked-view": "0.1.10",
+    "@react-navigation/native": "^6.0.2",
+    "expo": "^42.0.3",
+    "expo-av": "~9.2.3",
+    "expo-camera": "~11.2.2",
+    "expo-constants": "~11.0.1",
+    "expo-image-picker": "~10.2.2",
+    "expo-notifications": "~0.12.3",
+    "firebase": "8.2.3",
     "react": "16.13.1",
     "react-dom": "16.13.1",
     "react-native": "https://github.com/expo/react-native/archive/sdk-42.0.0.tar.gz",
-    "react-native-web": "~0.13.12"
+    "react-native-elements": "^3.4.2",
+    "react-native-gesture-handler": "~1.10.2",
+    "react-native-markdown-display": "https://github.com/iamacup/react-native-markdown-display/archive/refs/tags/6.1.6.tar.gz",
+    "react-native-reanimated": "^1.13.1",
+    "react-native-responsive-fontsize": "^0.5.1",
+    "react-native-safe-area-context": "3.2.0",
+    "react-native-screens": "~3.4.0",
+    "react-native-vector-icons": "^8.1.0",
+    "react-native-web": "~0.13.12",
+    "react-navigation": "^4.4.4",
+    "react-navigation-drawer": "^2.7.1",
+    "react-navigation-stack": "^2.10.4"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0"

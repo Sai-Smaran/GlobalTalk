@@ -1,17 +1,22 @@
 {
   "expo": {
     "name": "GlobalTalk",
-    "slug": "GlobalTalk",
-    "version": "1.0.0",
+    "slug": "gtalk",
+    "version": "0.1.2",
     "orientation": "portrait",
+    "scheme": "gtalk",
+    "primaryColor": "#6AA84F",
+    "description": "GlobalTalk is a platform in which you can talk to users publicly, or privately",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#6AA84F"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -20,13 +25,16 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.sai.globaltalk",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
-      }
+        "backgroundColor": "#6AA84F"
+      },
+      "permissions": ["MEDIA_LIBRARY", "CAMERA_ROLL", "CAMERA"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     }
+    
   }
 }
