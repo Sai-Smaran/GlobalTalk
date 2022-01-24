@@ -8,9 +8,9 @@ export default class AboutUserScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      userName: this.props.navigation.getParam("details")["user_name"],
-      imageLink: this.props.navigation.getParam("details")["profile_url"],
-      about: this.props.navigation.getParam("details")["about"],
+      userName: this.props.route.params.details.user_name,
+      imageLink: this.props.route.params.details.profile_url,
+      about: this.props.route.params.details.about,
     };
   }
 
@@ -24,7 +24,7 @@ export default class AboutUserScreen extends Component {
         }}
       >
         <MyStackHeader
-          title={"Profile - " + this.state.userName}
+          title={`Profile - ${this.state.userName}`}
           navigation={this.props.navigation}
         />
         <View style={styles.nameAvatarContainer}>

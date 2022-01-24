@@ -12,6 +12,9 @@ import {
 import { RFValue } from "react-native-responsive-fontsize";
 import { Header, Icon } from "react-native-elements";
 import firebase from "firebase";
+import * as Fonts from "expo-font";
+
+const customFonts = {};
 
 export default class LoginScreen extends Component {
   constructor(props) {
@@ -25,78 +28,69 @@ export default class LoginScreen extends Component {
     this.inputRef = null;
   }
 
+  generateKeywords = (userName) => {
+    const wordArr = userName.toLowerCase().split(" ");
+    const searchableKeywords = [];
+    let prevKey = "";
+    for (const word of wordArr) {
+      const charArr = word.toLowerCase().split("");
+      for (const char of charArr) {
+        const keyword = prevKey + char;
+        searchableKeywords.push(keyword);
+        prevKey = keyword;
+      }
+      prevKey = "";
+    }
+
+    return searchableKeywords;
+  };
+
   loginWithZucc = () => {
-    return Alert.alert(
-      "Work in progress!",
-      "Logging in with facebook is still being worked on. Stay tuned!"
-    );
-    // var zucc = new firebase.auth.FacebookAuthProvider();
-    // zucc.addScope("email");
-    // zucc.addScope("public_profile");
-    // firebase
-    //   .auth()
-    //   .signInWithRedirect(zucc)
-    //   .then(() => {
-    //     firebase
-    //       .auth()
-    //       .getRedirectResult()
-    //       .then((result) => {
-    //         db.collection("users").add({
-    //           user_name: result.user.displayName,
-    //           email: result.user.email,
-    //           profile_url: result.user.photoURL,
-    //         });
-    //       });
-    //   });
+    //TODO: Add login with facebook
+  };
+
+  twoFactorAuth = () => {
+    //TODO: Add 2fa
   };
 
   googleLogin = () => {
-    return Alert.alert(
-      "Work in progress!",
-      "Logging in with google is still being worked on. Stay tuned!"
-    );
-    // var provider = new firebase.auth.GoogleAuthProvider();
-    // firebase
-    //   .auth()
-    //   .signInWithRedirect(provider)
-    //   .then(() => {
-    //     firebase
-    //       .auth()
-    //       .getRedirectResult()
-    //       .then((result) => {
-    //         db.collection("users").add({
-    //           email: result.user.email,
-    //           user_name: result.user.displayName,
-    //           profile_picture_url: result.user.photoURL,
-    //         });
-    //         this.props.navigation.navigate("Drawer");
-    //       })
-    //       .catch((error) => {
-    //         //Handle errors here
-    //         var message = error.message;
-    //         return Alert.alert("Error", message);
-    //       });
-    //   });
+    //TODO: Add login with google
   };
 
   emailLogin = (email, pass) => {
+    const { navigation } = this.props;
     firebase
       .auth()
-      .signInWithEmailAndPassword(email, pass)
+      .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
       .then(() => {
-        this.props.navigation.navigate("Drawer");
+        firebase
+          .auth()
+          .signInWithEmailAndPassword(email, pass)
+          .then(() => {
+            navigation.navigate("Drawer");
+          })
+          .catch((error) => {
+            var errorCode = error.code;
+            var errorMessage = error.message;
+            console.log(errorCode);
+            this.setState({ loading: false });
+            return Alert.alert("Error", errorMessage);
+          });
       })
       .catch((error) => {
-        var errorCode = error.code;
-        var errorMessage = error.message;
-        console.log(errorCode);
-        this.setState({ loading: false });
-        return Alert.alert("Error", errorMessage);
+        console.log(`Error : ${error.code},
+          ${error.message}
+        `);
       });
   };
 
   componentDidMount() {
     this.setState({ loading: false });
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user.email) {
+        console.log(this.props.navigation.navigate("Drawer"));
+      }
+    });
   }
 
   render() {
@@ -129,21 +123,23 @@ export default class LoginScreen extends Component {
             style={{
               flexDirection: "row",
               height: RFValue(50),
-              top: RFValue(25),
+              marginTop: RFValue(25),
+              width: "80%",
             }}
           >
             <TextInput
               placeholder="Password"
               placeholderTextColor="gray"
               autoCompleteType="password"
+              keyboardType="default"
               style={[
                 styles.loginInput,
                 {
-                  width: "66%",
                   marginTop: 0,
                   borderRadius: 0,
                   borderTopLeftRadius: 10,
                   borderBottomLeftRadius: 10,
+                  width: RFValue(250),
                 },
               ]}
               ref={(input) => (this.inputRef = input)}
@@ -201,7 +197,7 @@ export default class LoginScreen extends Component {
             style={{
               marginTop: RFValue(20),
               marginBottom: RFValue(20),
-              height: 30,
+              height: RFValue(30),
             }}
             onPress={() => {
               this.props.navigation.navigate("SignUp");
@@ -214,10 +210,10 @@ export default class LoginScreen extends Component {
             <View style={{ flexDirection: "row" }}>
               <TouchableOpacity
                 style={styles.googleLoginButton}
-                onPress={() => this.googleLogin}
+                onPress={() => this.googleLogin()}
               >
                 <Image
-                  source={require("../assets/google.png")}
+                  source={require("../assets/static-images/google.png")}
                   style={{ width: RFValue(45), height: RFValue(45) }}
                 />
               </TouchableOpacity>
@@ -226,7 +222,7 @@ export default class LoginScreen extends Component {
                 onPress={() => this.loginWithZucc}
               >
                 <Image
-                  source={require("../assets/facebook.png")}
+                  source={require("../assets/static-images/facebook.png")}
                   style={{ width: RFValue(55), height: RFValue(55) }}
                 />
               </TouchableOpacity>

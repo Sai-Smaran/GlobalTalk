@@ -8,7 +8,8 @@ import {
   KeyboardAvoidingView,
   Text,
   Image,
-  Platform,
+  BackHandler,
+  Alert,
 } from "react-native";
 import { Icon, Avatar } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
@@ -17,16 +18,17 @@ import firebase from "firebase";
 import Constants from "expo-constants";
 import MyDrawerHeader from "../components/MyHeaders/MyDrawerHeader";
 import * as Notifications from "expo-notifications";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: false,
     shouldPlaySound: false,
     shouldSetBadge: true,
-  })
+  }),
 });
 
-export default class PrivateChat extends Component {
+export default class PublicChat extends Component {
   constructor() {
     super();
     this.state = {
@@ -37,10 +39,11 @@ export default class PrivateChat extends Component {
       pfpUrl: "#",
       unsubscribe: null,
       docId: "",
-      notification: {}
+      notification: {},
     };
     this.inputRef = null;
     this.listRef = null;
+    this.backHandler;
   }
 
   registerForPushNotificationsAsync = async () => {
@@ -67,6 +70,25 @@ export default class PrivateChat extends Component {
     }
   };
 
+  exitPrompt = () => {
+    Alert.alert(
+      "Exit app?",
+      "Are you sure you want to exit this app?",
+      [
+        {
+          text: "NO",
+          onPress: () => {},
+        },
+        {
+          text: "YES",
+          onPress: () => BackHandler.exitApp(),
+        },
+      ],
+      { cancelable: true }
+    );
+    return true;
+  };
+
   fetchUserImage = () => {
     var storageRef = firebase
       .storage()
@@ -87,7 +109,7 @@ export default class PrivateChat extends Component {
   };
 
   getAllPublicMessages = () => {
-    var unsubscribe = db
+    this.unsubscribe = db
       .collection("messages")
       .where("target", "==", "all")
       .orderBy("created_at")
@@ -100,20 +122,21 @@ export default class PrivateChat extends Component {
           allMessages: messages,
         });
       });
-    return unsubscribe;
+    console.log(this.unsubscribe);
   };
 
   getUserName() {
     db.collection("users")
       .where("email", "==", this.state.userId)
       .get()
-      .then((querySnapshot) => {
+      .then(async (querySnapshot) => {
         querySnapshot.forEach((doc) => {
           this.setState({
             userName: doc.data().user_name,
             docId: doc.id,
           });
         });
+        await this.registerForPushNotificationsAsync();
       });
   }
 
@@ -124,8 +147,8 @@ export default class PrivateChat extends Component {
       <View
         style={
           item.sender_email !== this.state.userId
-            ? { flexDirection: "row" }
-            : { flexDirection: "row-reverse" }
+            ? { flexDirection: "row", padding: RFValue(3) }
+            : { flexDirection: "row-reverse", padding: RFValue(3) }
         }
       >
         <Avatar
@@ -140,15 +163,17 @@ export default class PrivateChat extends Component {
           <Text style={{ fontWeight: "bold", fontSize: RFValue(20) }}>
             {item.sender_name}
           </Text>
-          <Text
-            style={
-              item.sender_email !== this.state.userId
-                ? styles.messagePopupConatiner
-                : styles.alsoMessagePopupConatiner
-            }
-          >
-            {item.message.toString()}
-          </Text>
+          <View>
+            <Text
+              style={
+                item.sender_email !== this.state.userId
+                  ? styles.messagePopupConatiner
+                  : styles.alsoMessagePopupConatiner
+              }
+            >
+              {item.message.toString()}
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -170,89 +195,104 @@ export default class PrivateChat extends Component {
       });
   };
 
-  handleChange = (e) => {
-    const { value } = e.target;
-
-    if (value !== "") {
-      this.unsubscribe && this.unsubscribe();
-      this.unsubscribe = this.getAllPublicMessages();
-    }
-  };
-
-  async componentDidMount() {
+  componentDidMount() {
+    this.backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      this.exitPrompt
+    );
     this.getAllPublicMessages();
     this.fetchUserImage();
     this.getUserName();
-    await this.registerForPushNotificationsAsync();
   }
 
   componentWillUnmount() {
-    this.unsubscribe ? this.unsubscribe() : null;
+    console.log("unmounting");
+    this.unsubscribe();
+    this.backHandler.remove();
   }
 
   render() {
     return (
-      <KeyboardAvoidingView behavior="padding">
-        <MyDrawerHeader
-          title="Public chat"
-          navigation={this.props.navigation}
-        />
-        <View style={{ height: "80%", backgroundColor: "#ebebeb" }}>
-          {this.state.allMessages.length !== 0 ? (
-            <FlatList
-              keyExtractor={this.keyExtractor}
-              data={this.state.allMessages}
-              renderItem={this.renderItem}
-              ref={(chatlist) => (this.listRef = chatlist)}
+      <SafeAreaProvider>
+        <KeyboardAvoidingView
+          behavior="padding"
+          keyboardVerticalOffset={-165}
+          style={{ flex: 1 }}
+        >
+          <MyDrawerHeader
+            title="Public chat"
+            navigation={this.props.navigation}
+          />
+          <View style={{ height: "80%", backgroundColor: "#ebebeb" }}>
+            {this.state.allMessages.length !== 0 ? (
+              <FlatList
+                keyExtractor={this.keyExtractor}
+                data={this.state.allMessages}
+                renderItem={this.renderItem}
+                ref={(chatlist) => (this.listRef = chatlist)}
+                style={{ flex: 0 }}
+              />
+            ) : (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Image
+                  source={require("../assets/static-images/sad-bubble.png")}
+                  width={288}
+                  height={287}
+                />
+                <Text style={{ color: "#9c9c9c" }}>
+                  Chat activity seems to be pretty dry today...
+                </Text>
+              </View>
+            )}
+          </View>
+          <View
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              backgroundColor: "#ebebeb",
+              justifySelf: "flex-end",
+              justifyContent: "center",
+            }}
+          >
+            <TextInput
+              style={styles.chatInput}
+              placeholder="Type something here..."
+              maxLength={128}
+              ref={(input) => (this.inputRef = input)}
+              onChangeText={(text) =>
+                this.setState({
+                  inputMessage: text,
+                })
+              }
+              value={this.state.inputMessage}
+              numberOfLines={1}
+              multiline
             />
-          ) : (
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
+            <TouchableOpacity
+              onPress={() => {
+                if (this.state.inputMessage.trim() !== "") {
+                  this.sendMessage(this.state.inputMessage);
+                }
               }}
             >
-              <Image
-                source={require("../assets/sad-bubble.png")}
-                width={100}
-                height={100}
+              <Icon
+                name="paper-plane"
+                type="font-awesome"
+                reverse
+                raised={true}
+                size={RFValue(30)}
+                color="#80AED7"
               />
-              <Text style={{ color: "#9c9c9c" }}>
-                Chat activity seems to be pretty dry today...
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={{ flexDirection: "row", backgroundColor: "#ebebeb" }}>
-          <TextInput
-            style={styles.chatInput}
-            placeholder="Type something here..."
-            maxLength={128}
-            ref={(input) => (this.inputRef = input)}
-            onChangeText={(text) =>
-              this.setState({
-                inputMessage: text,
-              })
-            }
-            value={this.state.inputMessage}
-            numberOfLines={1}
-            multiline
-          />
-          <TouchableOpacity
-            onPress={() => this.sendMessage(this.state.inputMessage)}
-          >
-            <Icon
-              name="paper-plane"
-              type="font-awesome"
-              reverse={true}
-              raised={true}
-              size={RFValue(30)}
-              color="#80AED7"
-            />
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaProvider>
     );
   }
 }
@@ -271,20 +311,19 @@ const styles = StyleSheet.create({
   },
   messagePopupConatiner: {
     backgroundColor: "#80AED7",
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
-    borderTopRightRadius: 15,
+    borderBottomLeftRadius: RFValue(15),
+    borderBottomRightRadius: RFValue(15),
+    borderTopRightRadius: RFValue(15),
     color: "white",
     padding: 5,
     fontSize: RFValue(16),
-    maxWidth: "80%",
     maxWidth: 250,
   },
   alsoMessagePopupConatiner: {
     backgroundColor: "#80AED7",
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
-    borderTopLeftRadius: 15,
+    borderBottomLeftRadius: RFValue(15),
+    borderBottomRightRadius: RFValue(15),
+    borderTopLeftRadius: RFValue(15),
     color: "white",
     padding: 5,
     fontSize: RFValue(16),

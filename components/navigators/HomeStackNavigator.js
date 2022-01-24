@@ -1,23 +1,21 @@
+import React from "react";
 import LoginScreen from "../../screens/loginscreen";
 import SignUpScreen from "../../screens/signupscreen";
-import { createStackNavigator } from "react-navigation-stack";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-export const HomeStackNavigator = createStackNavigator(
-  {
-    Login: {
-      screen: LoginScreen,
-      navigationOptions: {
-        headerShown: false,
-      },
-    },
-    SignUp: {
-      screen: SignUpScreen,
-      navigationOptions: {
-        headerShown: false,
-      },
-    },
-  },
-  {
-    initialRouteName: "Login",
-  }
-);
+const Stack = createNativeStackNavigator();
+
+export default function HomeStackNavigator(props) {
+  return (
+    <Stack.Navigator
+      initialRouteName="Login"
+      screenOptions={{ headerShown: false }}
+    >
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen
+        name="SignUp"
+        component={SignUpScreen}
+      />
+    </Stack.Navigator>
+  );
+}

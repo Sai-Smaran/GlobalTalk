@@ -1,19 +1,26 @@
 import React, { Component } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { DrawerItems } from "react-navigation-drawer";
+import { View, Text, TouchableOpacity, Dimensions } from "react-native";
 import { Avatar } from "react-native-elements";
 import firebase from "firebase";
 import db from "../../config";
 import { Icon } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
+import {
+  DrawerContentScrollView,
+  DrawerItemList,
+} from "@react-navigation/drawer";
 
 export default class CustomSideBarMenu extends Component {
-  state = {
-    userId: firebase.auth().currentUser.email,
-    image: "#",
-    userName: "",
-    docId: "",
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      userId: "vijayagiriramya2008@gmail.com",
+      image: "#",
+      userName: "",
+      docId: "",
+      width: 0,
+    };
+  }
 
   fetchImage = (imageName) => {
     var storageRef = firebase
@@ -52,22 +59,26 @@ export default class CustomSideBarMenu extends Component {
   }
 
   render() {
+    const { width } = Dimensions.get("window");
     return (
       <View style={{ flex: 1 }}>
         <View
-          style={{
-            flex: 0.3,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "#32867d",
-          }}
+          style={[
+            {
+              flex: 0.3,
+              justifyContent: "center",
+              alignItems: "center",
+              backgroundColor: "#32867d",
+            },
+            width >= 1024 ? { flexDirection: "row" } : undefined,
+          ]}
         >
           <Avatar
             rounded
             source={{
               uri: this.state.image,
             }}
-            size={"xlarge"}
+            size={width >= 1024 ? "large" : "xlarge"}
             showEditButton
             title={this.state.userName.charAt(0).toUpperCase()}
           />
@@ -83,9 +94,9 @@ export default class CustomSideBarMenu extends Component {
             Hello {this.state.userName}!
           </Text>
         </View>
-        <View style={{ flex: 0.6 }}>
-          <DrawerItems {...this.props} />
-        </View>
+        <DrawerContentScrollView {...this.props} style={{ flex: 0.6 }}>
+          <DrawerItemList {...this.props} />
+        </DrawerContentScrollView>
         <View style={{ flex: 0.1 }}>
           <TouchableOpacity
             style={{
@@ -94,8 +105,12 @@ export default class CustomSideBarMenu extends Component {
               height: "100%",
             }}
             onPress={() => {
-              this.props.navigation.navigate("Stack");
-              firebase.auth().signOut();
+              firebase
+                .auth()
+                .signOut()
+                .then(() => {
+                  this.props.navigation.navigate("Stack");
+                });
             }}
           >
             <Icon

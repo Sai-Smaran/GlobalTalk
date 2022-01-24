@@ -21,6 +21,7 @@ export default class SignUpScreen extends Component {
       emailAddress: "",
       password: "",
       password2: "",
+      loading: false,
     };
     this.emailRef = null;
     this.passRef = null;
@@ -50,18 +51,24 @@ export default class SignUpScreen extends Component {
     } else {
       firebase
         .auth()
-        .createUserWithEmailAndPassword(email, pass)
+        .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         .then(() => {
-          db.collection("users").add({
-            email: email,
-            user_name: this.state.userName,
-            searchable_keywords: this.generateKeywords(this.state.userName),
-          });
-          this.props.navigation.navigate("Drawer");
-        })
-        .catch((error) => {
-          Alert.alert("Error", error.message);
-          console.log(error.code);
+          firebase
+            .auth()
+            .createUserWithEmailAndPassword(email, pass)
+            .then(() => {
+              db.collection("users").add({
+                email: email,
+                user_name: this.state.userName,
+                searchable_keywords: this.generateKeywords(this.state.userName),
+                profile_url : "#"
+              });
+              this.props.navigation.navigate("Drawer");
+            })
+            .catch((error) => {
+              Alert.alert("Error", error.message);
+              console.log(error.code);
+            });
         });
     }
   };
@@ -130,7 +137,11 @@ export default class SignUpScreen extends Component {
               this.signUp(this.state.emailAddress, this.state.password)
             }
           >
-            <Text style={styles.loginButtonText}>Sign up</Text>
+            {this.state.loading ? (
+              <ActivityIndicator size="large" color="white" />
+            ) : (
+              <Text style={styles.loginButtonText}>Sign up</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

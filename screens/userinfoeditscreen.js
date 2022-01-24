@@ -9,8 +9,13 @@ import {
   ToastAndroid,
 } from "react-native";
 import { Avatar, Input, Icon } from "react-native-elements";
-import * as ImagePicker from "expo-image-picker";
-import { Camera } from "expo-camera";
+import {
+  getCameraPermissionsAsync,
+  requestCameraPermissionsAsync,
+  launchImageLibraryAsync,
+  launchCameraAsync,
+  MediaTypeOptions
+} from "expo-image-picker";
 import { RFValue } from "react-native-responsive-fontsize";
 import MyDrawerHeader from "../components/MyHeaders/MyDrawerHeader";
 import firebase from "firebase";
@@ -27,30 +32,21 @@ export default class UserInfoEditingScreen extends Component {
   };
 
   getCameraPermissions = async () => {
-    const { granted } = await ImagePicker.getCameraPermissionsAsync();
-
-    //I put this because I don't know what to expect from the function above
-    console.log(granted ? "I think I heard something..." : "Meh nothing here.");
-
-    //If permission for camera is not granted by default, then ask for permission.
-    //If permission is still not granted, then let the user know that the permission is required to take a photo.
-    if (!granted) {
-      const { status } = await Camera.getPermissionsAsync();
-      console.log(status);
-
-      if (status !== "granted") {
-        ToastAndroid.showWithGravityAndOffset(
-          "Camera permissions are required to take and upload a picture.",
-          ToastAndroid.SHORT
-        );
-      } else {
-        console.log("got perms");
-        await this.takePicture();
-      }
-    } else {
-      console.log("got perms");
-      await this.takePicture();
+    const { status: existingStatus } =
+      await getCameraPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (finalStatus !== "granted") {
+      const { status } = await requestCameraPermissionsAsync();
+      finalStatus = status;
     }
+    if (finalStatus === "denied") {
+      Alert.alert(
+        "Can't take photos",
+        "Camera permissions are required to take a photo"
+      );
+      return;
+    }
+    await this.takePicture();
   };
 
   generateKeywords = (userName) => {
@@ -71,8 +67,8 @@ export default class UserInfoEditingScreen extends Component {
   };
 
   takePicture = async () => {
-    const { cancelled, uri } = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    const { cancelled, uri } = await launchCameraAsync({
+      mediaTypes: MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
@@ -86,8 +82,8 @@ export default class UserInfoEditingScreen extends Component {
   };
 
   selectPicture = async () => {
-    const { cancelled, uri } = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    const { cancelled, uri } = await launchImageLibraryAsync({
+      mediaTypes: MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,

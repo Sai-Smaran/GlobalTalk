@@ -216,20 +216,20 @@ function strToUTF8Arr(sDOMStr) {
 function encrypt(str) {
   var input = strToUTF8Arr(str);
   var base64 = base64EncArr(input);
-  return base64;
+  return base64.toString();
 }
 
 /**
  * Decrypts given input using Base64
  *
  * @param string A string to Decrypt
- * @returns  A base64 decrypted data in the form of a string
+ * @returns A base64 decrypted data in the form of a string
  */
 
 function decrypt(base64) {
-  var base64 = base64DecToArr(base64);
-  var output = UTF8ArrToStr(base64);
-  return output;
+  var b64 = base64DecToArr(base64.toString());
+  var output = UTF8ArrToStr(b64);
+  return output.toString();
 }
 
 export { encrypt, decrypt };

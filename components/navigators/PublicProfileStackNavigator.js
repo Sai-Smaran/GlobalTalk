@@ -1,21 +1,18 @@
-import PrivateChat from "../../screens/publicchatscreen";
+import React from "react";
+import PublicChat from "../../screens/publicchatscreen";
 import AboutUserScreen from "../../screens/aboutuserscreen";
-import { createStackNavigator } from "react-navigation-stack";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-export const PublicChatStackNavigator = createStackNavigator(
-  {
-    Public: {
-      screen: PrivateChat,
-      navigationOptions: {
-        headerShown: false,
-      },
-    },
-    AboutUser: {
-      screen: AboutUserScreen,
-      navigationOptions: {
-        headerShown: false,
-      },
-    },
-  },
-  { initialRouteName: "Public" }
-);
+const Stack = createNativeStackNavigator();
+
+export default function PublicChatStackNavigator(props) {
+  return (
+    <Stack.Navigator
+      initialRouteName="Public"
+      screenOptions={{ headerShown: false }}
+    >
+      <Stack.Screen component={PublicChat} name="Public" />
+      <Stack.Screen component={AboutUserScreen} name="AboutUser" />
+    </Stack.Navigator>
+  );
+}

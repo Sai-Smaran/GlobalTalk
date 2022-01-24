@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, FlatList, Platform } from "react-native";
+import { View, FlatList, Platform, Dimensions } from "react-native";
 import { SearchBar, ListItem, Avatar } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
 import MyDrawerHeader from "../components/MyHeaders/MyDrawerHeader";
@@ -37,14 +37,22 @@ export default class SearchUser extends Component {
 
   keyExtractor = (item, index) => index.toString();
 
+  aboutShortener = (message) => {
+    let charLen = Math.round(Dimensions.get("window").width / 13);
+    console.log(charLen);
+    if (message.length > charLen) {
+      return message.slice(0, charLen - 3) + "...";
+    } else {
+      return message;
+    }
+  };
+
   renderItem = ({ item, i }) => (
     <ListItem
       onPress={() => {
-        if (item.email !== this.state.userId) {
           this.props.navigation.navigate("Chat", {
             details: item,
           });
-        }
       }}
       onLongPress={() =>
         this.props.navigation.navigate("About", { details: item })
@@ -52,15 +60,17 @@ export default class SearchUser extends Component {
     >
       <Avatar
         rounded
-        source={item.profile_url ? { uri: item.profile_url } : { uri: "#" }}
+        source={{ uri: item.profile_url }}
         title={item.user_name.charAt(0).toUpperCase()}
         size={RFValue(60)}
       />
       <ListItem.Content>
-        <ListItem.Title style={{ fontWeight: "bold" }}>
+        <ListItem.Title style={{ fontWeight: "bold", fontSize: RFValue(20) }}>
           {item.user_name}
         </ListItem.Title>
-        <ListItem.Subtitle>{item.about}</ListItem.Subtitle>
+        <ListItem.Subtitle>
+          {item.about ? this.aboutShortener(item.about) : ""}
+        </ListItem.Subtitle>
       </ListItem.Content>
       <ListItem.Chevron color="#ededed" size={50} />
     </ListItem>
@@ -85,6 +95,7 @@ export default class SearchUser extends Component {
             this.getUsers();
           }}
           returnKeyType="search"
+          onClear={() => this.setState({ allResults: [] })}
         />
         <FlatList
           keyExtractor={this.keyExtractor}

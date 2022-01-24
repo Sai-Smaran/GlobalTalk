@@ -1,30 +1,28 @@
+import React from "react"
 import SearchUser from "../../screens/searchuserscreen";
 import PrivateChat from "../../screens/privatechatscreen";
 import AboutUser from "../../screens/aboutuserscreen";
-import * as Notifications from "expo-notifications";
-import { createStackNavigator } from "react-navigation-stack";
-import { Linking } from "react-native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import ConfirmSendImage from "../../screens/confirmsendimagescreen";
+import EditImageScreen from "../../screens/editimagescreen";
+import SentImgList from "../../screens/sentimagelistscreen";
+import ImageView from "../../screens/imageviewscreen";
 
-export const PrivateChatStackNavigator = createStackNavigator(
-  {
-    Search: {
-      screen: SearchUser,
-      navigationOptions: {
-        headerShown: false,
-      },
-    },
-    Chat: {
-      screen: PrivateChat,
-      navigationOptions: {
-        headerShown: false,
-      },
-    },
-    About: {
-      screen: AboutUser,
-      navigationOptions: {
-        headerShown: false,
-      },
-    },
-  },
-  { initialRouteName: "Search" }
-);
+const Stack = createNativeStackNavigator();
+
+export default function PrivateChatStackNavigator(props) {
+  return (
+    <Stack.Navigator
+      initialRouteName="Search"
+      screenOptions={{ headerShown: false }}
+    >
+      <Stack.Screen component={SearchUser} name="Search" />
+      <Stack.Screen component={PrivateChat} name="Chat" />
+      <Stack.Screen component={AboutUser} name="About" />
+      <Stack.Screen component={ConfirmSendImage} name="Confirm" />
+      <Stack.Screen component={EditImageScreen} name="Edit" />
+      <Stack.Screen component={SentImgList} name="List" />
+      <Stack.Screen component={ImageView} name="View" />
+    </Stack.Navigator>
+  );
+}

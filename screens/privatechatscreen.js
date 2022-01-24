@@ -1,24 +1,26 @@
 import React, { Component } from "react";
 import {
   View,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   FlatList,
   KeyboardAvoidingView,
   Text,
   Image,
+  Alert,
+  Modal,
 } from "react-native";
-import { Icon } from "react-native-elements";
+import "react-native-get-random-values";
+import { v4 as uuid } from "uuid";
 import { RFValue } from "react-native-responsive-fontsize";
 import db from "../config";
 import firebase from "firebase";
 import MyStackHeader from "../components/MyHeaders/MyStackHeader";
-import {
-  encrypt as btoa,
-  decrypt as atob,
-} from "../components/customBase64Encryption";
+import { decrypt as atob } from "../components/customBase64Encryption";
 import { Audio } from "expo-av";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import ImageTiles from "../components/UIComponents/imagetiles";
+import ChatInput from "../components/UIComponents/chatInput";
+import Waves from "../components/UIComponents/waves";
 
 export default class PrivateChat extends Component {
   constructor(props) {
@@ -28,61 +30,121 @@ export default class PrivateChat extends Component {
       inputMessage: "",
       allMessages: [],
       userName: "",
-      otherUserId: this.props.navigation.getParam("details")["email"],
-      otherUserName: this.props.navigation.getParam("details")["user_name"],
-      expoPushToken: this.props.navigation.getParam("details")["push_token"],
-      docId: "",
+      otherUserId: this.details.email,
+      otherUserName: this.details.user_name,
+      expoPushToken: this.details.push_token,
+      recieved: false,
+      record: null,
+      metering: -120,
     };
+    this.record = undefined;
     this.unsub = null;
-    this.soundunSub;
-    this.soundunSub2;
+    this.recievedSound;
     this.inputRef = null;
     this.listRef = null;
   }
 
-  playSentSound = async () => {
-    const { sound } = await Audio.Sound.createAsync(
-      require("../assets/sent.wav")
-    );
+  details = this.props.route.params.details;
 
-    this.soundunSub = sound;
-
-    this.soundunSub.playAsync();
+  startRecordAudio = async () => {
+    if (this.record !== undefined) {
+      this.record = undefined;
+    }
+    console.log("Starting recording");
+    const { status: existingStatus } = await Audio.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+      const { status } = await Audio.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus === "denied") {
+      Alert.alert(
+        "Unable to record audio",
+        "Audio recording permissions are required to record your voice"
+      );
+      return;
+    }
+    try {
+      const { recording: audioRecording, status } =
+        await Audio.Recording.createAsync(
+          Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+        );
+      this.record = audioRecording;
+      audioRecording.setOnRecordingStatusUpdate(({ metering, isRecording }) => {
+        if (isRecording) {
+          this.setState({
+            metering: metering,
+          });
+        }
+      });
+    } catch (e) {
+      console.log("something went wrong: " + e);
+    }
   };
 
-  playRecievedSound = async () => {
+  stopRecordAudio = async () => {
+    if (this.record !== undefined) {
+      console.log("Stopping recording");
+      await this.record.stopAndUnloadAsync();
+      const uri = this.record.getURI();
+      console.log("You may find your beautiful voice here: " + uri);
+      await this.sendRecording(uri);
+      this.record = undefined;
+    }
+  };
+
+  sendRecording = async (uri) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    const storageRef = firebase
+      .storage()
+      .ref()
+      .child("shared_media/" + uuid());
+
+    return storageRef.put(blob);
+  };
+
+  loadRecievedSound = async () => {
     const { sound } = await Audio.Sound.createAsync(
-      require("../assets/recieve.mp3")
+      require("../assets/sounds/recieve.mp3")
     );
 
-    this.soundunSub2 = sound;
-
-    this.soundunSub2.playAsync();
+    this.recievedSound = sound;
   };
 
   getAllPrivateMessages = () => {
-    db.collection("messages")
-      .where("visible_to", "array-contains-any", [this.state.otherUserId])
+    const docId =
+      this.state.otherUserId > this.state.currentUserId
+        ? this.state.currentUserId + "-" + this.state.otherUserId
+        : this.state.otherUserId + "-" + this.state.currentUserId;
+    this.unsub = db
+      .collection("chat_sessions")
+      .doc(docId)
+      .collection("messages")
       .orderBy("created_at")
-      .onSnapshot((snapshot) => {
-        var messages = [];
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === "added") {
-            if (this.listRef !== null) {
-              this.listRef.scrollToEnd();
+      .onSnapshot(
+        (snapshot) => {
+          snapshot.docChanges().forEach(async (change) => {
+            if (
+              change.type === "added" &&
+              change.doc.data().email !== this.state.currentUserId
+            ) {
+              await this.recievedSound.playAsync();
             }
-            if (change.doc.data().sender_email !== this.state.currentUserId) {
-              this.playRecievedSound();
-            }
-          }
-        });
-        snapshot.forEach((doc) => {
-          messages.push(doc.data());
-        });
-        this.setState({
-          allMessages: messages,
-        });
-      });
+          });
+          var message = [];
+          snapshot.forEach((doc) => {
+            message.push(doc.data());
+          });
+          this.setState({
+            allMessages: message,
+          });
+        },
+        (error) => {
+          Alert.alert("Something went wrong", error.message);
+        }
+      );
   };
 
   getUserName() {
@@ -93,11 +155,15 @@ export default class PrivateChat extends Component {
         querySnapshot.forEach((doc) => {
           this.setState({
             userName: doc.data().user_name,
-            docId: doc.id,
           });
         });
       });
   }
+
+  renderImage = (item) => {
+    const { navigation } = this.props;
+    return <ImageTiles navigation={navigation} item={item} />;
+  };
 
   keyExtractor = (item, index) => index.toString();
 
@@ -106,173 +172,149 @@ export default class PrivateChat extends Component {
       <View
         style={
           item.sender_email !== this.state.currentUserId
-            ? { flexDirection: "row" }
-            : { flexDirection: "row-reverse" }
+            ? { flexDirection: "row", paddingVertical: RFValue(2.5) }
+            : { flexDirection: "row-reverse", paddingVertical: RFValue(2.5) }
         }
       >
-        <View>
-          <Text
+        {!item.media ? (
+          <View>
+            <Text
+              style={
+                item.sender_email !== this.state.currentUserId
+                  ? styles.messagePopupConatiner
+                  : styles.alsoMessagePopupConatiner
+              }
+            >
+              {atob(item.message)}
+            </Text>
+          </View>
+        ) : (
+          <View
             style={
               item.sender_email !== this.state.currentUserId
-                ? styles.messagePopupConatiner
-                : styles.alsoMessagePopupConatiner
+                ? [styles.messagePopupConatiner, { maxWidth: RFValue(350) }]
+                : [styles.alsoMessagePopupConatiner, { maxWidth: RFValue(350) }]
             }
           >
-            {atob(item.message)}
-          </Text>
-        </View>
+            {this.renderImage(item)}
+          </View>
+        )}
       </View>
     );
   };
 
-  sendMessage = (message) => {
-    db.collection("messages")
-      .add({
-        created_at: firebase.firestore.FieldValue.serverTimestamp(),
-        message: btoa(message),
-        sender_name: this.state.userName,
-        sender_email: this.state.currentUserId,
-        visible_to: [this.state.otherUserId, this.state.currentUserId],
-      })
-      .then(() => {
-        this.inputRef.clear();
-        this.playSentSound();
-        this.sendNotification();
-      });
-  };
+  recordingModal = () => (
+    <Modal transparent visible={false} collapsable>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "rgba(0, 0, 0, 0.6)",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <View
+          style={{
+            backgroundColor: "white",
+            width: "75%",
+            height: "50%",
+            elevation: 48,
+            borderRadius: RFValue(10),
+            shadowColor: "black",
+          }}
+        >
+          <Waves loudness={this.state.metering} />
+        </View>
+      </View>
+    </Modal>
+  );
 
   async componentDidMount() {
+    await this.loadRecievedSound();
     this.getAllPrivateMessages();
     this.getUserName();
   }
 
-  sendNotification = async () => {
-    if (!this.state.expoPushToken) {
-      console.log("Can't find user's token");
-      return;
-    }
-    await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        to: this.state.expoPushToken,
-        sound: "default",
-        title: this.state.otherUserName,
-        body: this.state.inputMessage,
-      }),
-    });
-  };
-
-  componentWillUnmount() {
-    if (this.soundunSub) {
-      this.soundunSub.unloadAsync();
-    }
-    if (this.soundunSub2) {
-      this.soundunSub2.unloadAsync();
+  async componentWillUnmount() {
+    if (this.recievedSound) {
+      await this.recievedSound.unloadAsync();
     }
   }
+
   render() {
     return (
-      <KeyboardAvoidingView behavior="padding">
-        <MyStackHeader
-          title={"Private chat - " + this.state.otherUserName}
-          navigation={this.props.navigation}
-        />
-        <View style={{ height: "80%", backgroundColor: "#ebebeb" }}>
-          {this.state.allMessages.length !== 0 ? (
-            <FlatList
-              keyExtractor={this.keyExtractor}
-              data={this.state.allMessages}
-              renderItem={this.renderItem}
-              ref={(ref) => {
-                ref !== null ? (this.listRef = ref) : (this.listRef = null);
-              }}
-            />
-          ) : (
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Image
-                source={require("../assets/sad-bubble.png")}
-                width={100}
-                height={100}
-              />
-              <Text style={{ color: "#9c9c9c" }}>
-                Chat activity seems to be pretty dry today...
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={{ flexDirection: "row", backgroundColor: "#ebebeb" }}>
-          <TextInput
-            style={styles.chatInput}
-            placeholder="Type something here..."
-            maxLength={128}
-            ref={(input) => (this.inputRef = input)}
-            onChangeText={(text) =>
-              this.setState({
-                inputMessage: text,
-              })
-            }
-            value={this.state.inputMessage}
-            numberOfLines={1}
-            multiline
+      <SafeAreaProvider>
+        {this.recordingModal()}
+        <KeyboardAvoidingView
+          behavior="padding"
+          keyboardVerticalOffset={-165}
+          style={{ flex: 1 }}
+        >
+          <MyStackHeader
+            title={this.state.otherUserName}
+            navigation={this.props.navigation}
           />
-          <TouchableOpacity
-            onPress={() => this.sendMessage(this.state.inputMessage)}
-          >
-            <Icon
-              name="paper-plane"
-              type="font-awesome"
-              reverse={true}
-              raised={true}
-              size={RFValue(30)}
-              color="#80AED7"
-            />
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+          <View style={{ height: "80%", backgroundColor: "#ebebeb" }}>
+            {this.state.allMessages.length !== 0 ? (
+              <FlatList
+                keyExtractor={this.keyExtractor}
+                data={this.state.allMessages}
+                renderItem={this.renderItem}
+                ref={(ref) => {
+                  ref !== null ? (this.listRef = ref) : (this.listRef = null);
+                }}
+              />
+            ) : (
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Image
+                  source={require("../assets/static-images/sad-bubble.png")}
+                  width={288}
+                  height={287}
+                />
+                <Text style={{ color: "#9c9c9c" }}>
+                  Chat activity seems to be pretty dry today...
+                </Text>
+              </View>
+            )}
+          </View>
+          <ChatInput
+            expoPushToken={this.state.expoPushToken}
+            otherUserId={this.state.otherUserId}
+            userName={this.state.userName}
+            navigation={this.props.navigation}
+            onRecord={() => {}}
+          />
+        </KeyboardAvoidingView>
+      </SafeAreaProvider>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  chatInput: {
-    width: "80%",
-    height: RFValue(75),
-    borderColor: "gray",
-    borderRadius: RFValue(50),
-    backgroundColor: "white",
-    shadowRadius: 1,
-    elevation: 8,
-    fontSize: RFValue(20),
-    paddingLeft: 10,
-  },
   messagePopupConatiner: {
     backgroundColor: "#80AED7",
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
-    borderTopRightRadius: 15,
+    borderBottomLeftRadius: RFValue(15),
+    borderBottomRightRadius: RFValue(15),
+    borderTopRightRadius: RFValue(15),
     color: "white",
-    padding: 5,
+    padding: RFValue(5),
     fontSize: RFValue(16),
-    maxWidth: 250,
+    maxWidth: RFValue(300),
   },
   alsoMessagePopupConatiner: {
     backgroundColor: "#80AED7",
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
-    borderTopLeftRadius: 15,
+    borderBottomLeftRadius: RFValue(15),
+    borderBottomRightRadius: RFValue(15),
+    borderTopLeftRadius: RFValue(15),
     color: "white",
-    padding: 5,
+    padding: RFValue(5),
     fontSize: RFValue(16),
-    maxWidth: 250,
+    maxWidth: RFValue(300),
   },
 });
