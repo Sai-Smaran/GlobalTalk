@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { TouchableOpacity, View, FlatList, Image } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
-import { SharedElement } from "react-navigation-shared-element/build/v4";
+import { SharedElement } from "react-navigation-shared-element";
 import MyStackHeader from "../components/MyHeaders/MyStackHeader";
 
 export default class SentImgList extends Component {
