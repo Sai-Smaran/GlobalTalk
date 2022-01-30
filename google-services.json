@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "730399382561",
+    "project_id": "globaltalk-c05a4",
+    "storage_bucket": "globaltalk-c05a4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730399382561:android:827f8047a6ba245221d760",
+        "android_client_info": {
+          "package_name": "com.sai.globaltalk"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "730399382561-7gnu9pm9j2haf33rp9r7ulli8jiar304.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBb_rXTKnVWYStss3pyQsuhs3rb3hlVBEw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "730399382561-7gnu9pm9j2haf33rp9r7ulli8jiar304.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

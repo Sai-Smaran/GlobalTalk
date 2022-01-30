@@ -7,7 +7,6 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
-google-services.json
 *.db
 .vscode/
 
