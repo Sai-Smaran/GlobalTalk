@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { TouchableOpacity, View, FlatList, Image } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
-import { SharedElement } from "react-navigation-shared-element";
+// import { SharedElement } from "react-navigation-shared-element";
 import MyStackHeader from "../components/MyHeaders/MyStackHeader";
 
 export default class SentImgList extends Component {
@@ -31,13 +31,13 @@ export default class SentImgList extends Component {
         });
       }}
     >
-      <SharedElement id={`img-list-${index}`}>
+      {/* <SharedElement id={`img-list-${index}`}> */}
         <Image
           source={{ uri: item }}
           style={{ height: RFValue(200) }}
           loadingIndicatorSource={require("../assets/static-images/loading-spinner.gif")}
         />
-      </SharedElement>
+      {/* </SharedElement> */}
     </TouchableOpacity>
   );
 

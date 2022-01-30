@@ -77,6 +77,7 @@ export default class ConfirmSendImage extends Component {
       .add({
         created_at: firebase.firestore.FieldValue.serverTimestamp(),
         media: imgArray,
+        media_type: "image",
         sender_email: this.state.currentUserId,
         sender_name: this.state.currentUserName,
       })

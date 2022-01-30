@@ -88,7 +88,7 @@ export default function Waves({ loudness }) {
         alignItems: "center",
       }}
     >
-      <Animated.View style={[styles.wave, animatedLine5]} />
+      <Animated.View style={[styles.wave, animatedLine5, { marginLeft: 0 }]} />
       <Animated.View style={[styles.wave, animatedLine4]} />
       <Animated.View style={[styles.wave, animatedLine3]} />
       <Animated.View style={[styles.wave, animatedLine2]} />

@@ -20,7 +20,6 @@ export default function AppDrawerNavigator() {
         headerShown: false,
         drawerType: width >= 1024 ? "permanent" : "slide",
         drawerLabelStyle: styles.labelStyles,
-        lazy: false,
       }}
     >
       <Drawer.Screen

@@ -1,0 +1,13 @@
+{
+	"cli": {
+		"requireCommit": true
+	},
+	"build": {
+		"production": {
+			"distribution": "internal",
+			"android": {
+				"buildType": "apk"
+			}
+		}
+	}
+}

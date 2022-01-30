@@ -19,7 +19,7 @@ export default function App() {
       <Stack.Navigator
         initialRouteName="Stack"
         screenOptions={{ headerShown: false, animation: "flip" }}
-        defaultScreenOptions={{ animationTypeForReplace: "push" }}
+        
       >
         <Stack.Screen name="Stack" component={HomeStackNavigator} />
         <Stack.Screen name="Drawer" component={AppDrawerNavigator} />

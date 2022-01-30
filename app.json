@@ -2,7 +2,7 @@
   "expo": {
     "name": "GlobalTalk",
     "slug": "gtalk",
-    "version": "0.1.3",
+    "version": "0.2.3",
     "orientation": "default",
     "jsEngine": "hermes",
     "scheme": "gtalk",
@@ -29,8 +29,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#6AA84F"
-      },
-      "permissions": ["RECORD_AUDIO", "CAMERA", "CAMERA_ROLL"]
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
