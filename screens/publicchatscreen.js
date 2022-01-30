@@ -15,7 +15,7 @@ import { Icon, Avatar } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
 import db from "../config";
 import firebase from "firebase";
-import Constants from "expo-constants";
+import { isDevice } from "expo-device";
 import MyDrawerHeader from "../components/MyHeaders/MyDrawerHeader";
 import * as Notifications from "expo-notifications";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -47,7 +47,7 @@ export default class PublicChat extends Component {
   }
 
   registerForPushNotificationsAsync = async () => {
-    if (Constants.isDevice) {
+    if (isDevice) {
       const { status: existingStatus } =
         await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;

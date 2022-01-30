@@ -92,7 +92,7 @@ export default class LoginScreen extends Component {
 		this.setState({ loading: false });
 		firebase.auth().onAuthStateChanged((user) => {
 			if (user.email) {
-				this.props.navigation.navigate("Drawer")
+				console.log(this.props.navigation.navigate("Drawer"));
 			}
 		});
 		this.dimListener = Dimensions.addEventListener("change", ({ window }) => {
@@ -254,7 +254,7 @@ export default class LoginScreen extends Component {
 								</TouchableOpacity>
 								<TouchableOpacity
 									style={styles.googleLoginButton}
-									onPress={() => this.loginWithZucc}
+									onPress={() => this.loginWithZucc()}
 								>
 									<Image
 										source={require("../assets/static-images/facebook.png")}

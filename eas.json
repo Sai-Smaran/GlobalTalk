@@ -5,6 +5,7 @@
 	"build": {
 		"production": {
 			"distribution": "store",
+			"releaseChannel": "default",
 			"android": {
 				"buildType": "apk"
 			}
