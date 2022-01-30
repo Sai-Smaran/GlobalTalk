@@ -1,38 +1,38 @@
 {
-  "expo": {
-    "name": "GlobalTalk",
-    "slug": "gtalk",
-    "version": "0.2.3",
-    "orientation": "default",
-    "jsEngine": "hermes",
-    "scheme": "gtalk",
-    "primaryColor": "#6AA84F",
-    "description": "GlobalTalk is a platform in which you can talk to users publicly, or privately",
-    "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#6AA84F"
-    },
-    "updates": {
-      "enabled": true,
-      "fallbackToCacheTimeout": 0,
-      "checkAutomatically": "ON_LOAD"
-    },
-    "assetBundlePatterns": ["**/*"],
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "package": "com.sai.globaltalk",
-      "googleServicesFile": "./google-services.json",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#6AA84F"
-      }
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
-  }
+	"expo": {
+		"name": "GlobalTalk",
+		"slug": "gtalk",
+		"version": "0.2.3",
+		"orientation": "default",
+		"jsEngine": "hermes",
+		"scheme": "gtalk",
+		"primaryColor": "#6AA84F",
+		"description": "GlobalTalk is a platform in which you can talk to users publicly, or privately",
+		"icon": "./assets/icon.png",
+		"splash": {
+			"image": "./assets/splash.png",
+			"resizeMode": "contain",
+			"backgroundColor": "#6AA84F"
+		},
+		"updates": {
+			"enabled": true,
+			"fallbackToCacheTimeout": 0,
+			"checkAutomatically": "ON_LOAD"
+		},
+		"assetBundlePatterns": ["**/*"],
+		"ios": {
+			"supportsTablet": true
+		},
+		"android": {
+			"package": "com.sai.globaltalk",
+			"googleServicesFile": "C:/Users/home/Desktop/Expo projects/GlobalTalk/google-services.json",
+			"adaptiveIcon": {
+				"foregroundImage": "./assets/adaptive-icon.png",
+				"backgroundColor": "#6AA84F"
+			}
+		},
+		"web": {
+			"favicon": "./assets/favicon.png"
+		}
+	}
 }
