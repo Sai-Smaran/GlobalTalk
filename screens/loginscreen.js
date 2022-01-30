@@ -92,7 +92,7 @@ export default class LoginScreen extends Component {
 		this.setState({ loading: false });
 		firebase.auth().onAuthStateChanged((user) => {
 			if (user.email) {
-				console.log(this.props.navigation.navigate("Drawer"));
+				this.props.navigation.navigate("Drawer")
 			}
 		});
 		this.dimListener = Dimensions.addEventListener("change", ({ window }) => {
