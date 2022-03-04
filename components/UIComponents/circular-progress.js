@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { View, Text, Dimensions, StyleSheet } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 import Animated, {
 	Easing,
 	useAnimatedProps,
@@ -12,7 +12,6 @@ import { ReText } from "react-native-redash";
 import { RFValue } from "react-native-responsive-fontsize";
 import Svg, { Circle } from "react-native-svg";
 
-const { width, height } = Dimensions.get("window");
 
 const CIRCLE_LENGTH = 1000;
 const r = CIRCLE_LENGTH / (Math.PI * 2);

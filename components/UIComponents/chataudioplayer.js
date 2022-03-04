@@ -1,15 +1,9 @@
-import React, { useEffect, useState } from "react";
-import {
-	View,
-	Text,
-	StyleSheet,
-	Image,
-	TouchableOpacity,
-	ActivityIndicator,
-} from "react-native";
+import React, { useCallback, useState } from "react";
+import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Audio } from "expo-av";
 import { Icon } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function ChatAudioPlayer({ item }) {
 	const [playbackObj] = useState(new Audio.Sound());
@@ -17,23 +11,16 @@ export default function ChatAudioPlayer({ item }) {
 	const [currentAudio, setCurrentAudio] = useState("#");
 
 	async function handleAudio() {
-		if (!soundObj) {
-			const sound = await playbackObj.loadAsync(
+		if (!playbackObj) {
+			const sound = playbackObj.loadAsync(
 				{ uri: item.media },
-				{
-					isLooping: false,
-					shouldPlay: true,
-				}
+				{ shouldPlay: true }
 			);
-			setCurrentAudio(item.media);
-			return setSoundObj(sound);
 		}
-
 		if (soundObj.isLoaded && soundObj.isPlaying) {
 			const status = await playbackObj.setStatusAsync({ shouldPlay: false });
 			setSoundObj(status);
 		}
-
 		if (
 			soundObj.isLoaded &&
 			!soundObj.isPlaying &&
@@ -44,13 +31,6 @@ export default function ChatAudioPlayer({ item }) {
 		}
 	}
 
-	useEffect(async () => {
-		return async () => {
-			if (soundObj) {
-				playbackObj.unloadAsync();
-			}
-		};
-	});
 
 	return (
 		<View style={{ flexDirection: "row", alignItems: "center" }}>

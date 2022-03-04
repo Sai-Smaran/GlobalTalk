@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { ScrollView, View, Text, StyleSheet } from "react-native";
 import { Avatar } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
-import MyStackHeader from "../components/MyHeaders/MyStackHeader";
+import MyStackHeader from "../../components/MyHeaders/MyStackHeader";
 
 export default class AboutUserScreen extends Component {
   constructor(props) {

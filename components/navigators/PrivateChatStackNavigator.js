@@ -10,7 +10,7 @@ import ImageView from "../../screens/imageviewscreen";
 
 const Stack = createNativeStackNavigator();
 
-export default function PrivateChatStackNavigator(props) {
+export default function PrivateChatStackNavigator() {
   return (
     <Stack.Navigator
       initialRouteName="Search"

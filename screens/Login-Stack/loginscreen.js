@@ -11,7 +11,7 @@ import {
 	Dimensions,
 } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
-import { Header, Icon } from "react-native-elements";
+import { Divider, Header, Icon } from "react-native-elements";
 import firebase from "firebase";
 
 export default class LoginScreen extends Component {
@@ -65,7 +65,6 @@ export default class LoginScreen extends Component {
 	};
 
 	emailLogin = (email, pass) => {
-		const { navigation } = this.props;
 		firebase
 			.auth()
 			.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
@@ -90,11 +89,6 @@ export default class LoginScreen extends Component {
 
 	componentDidMount() {
 		this.setState({ loading: false });
-		firebase.auth().onAuthStateChanged((user) => {
-			if (user.email) {
-				console.log(this.props.navigation.navigate("Drawer"));
-			}
-		});
 		this.dimListener = Dimensions.addEventListener("change", ({ window }) => {
 			this.setState({
 				width: window.width,
@@ -136,9 +130,11 @@ export default class LoginScreen extends Component {
 								style={styles.loginInput}
 								onChangeText={(text) => {
 									this.setState({
-										emailId: text,
+										emailId: text.trim(),
 									});
 								}}
+								returnKeyType="next"
+								value={this.state.emailId}
 							/>
 							<View
 								style={{
@@ -225,6 +221,11 @@ export default class LoginScreen extends Component {
 								</Text>
 							</TouchableOpacity>
 						</View>
+						<Divider
+							orientation="vertical"
+							width={1.5}
+							style={{ justifySelf: "center" }}
+						/>
 						<View
 							style={{
 								alignItems: "center",

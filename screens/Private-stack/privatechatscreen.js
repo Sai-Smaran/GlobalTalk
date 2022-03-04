@@ -12,16 +12,14 @@ import {
 import "react-native-get-random-values";
 import { v4 as uuid } from "uuid";
 import { RFValue } from "react-native-responsive-fontsize";
-import db from "../config";
+import db from "../../config";
 import firebase from "firebase";
-import MyStackHeader from "../components/MyHeaders/MyStackHeader";
-import { decrypt as atob } from "../components/customBase64Encryption";
+import MyStackHeader from "../../components/MyHeaders/MyStackHeader";
 import { Audio } from "expo-av";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import ImageTiles from "../components/UIComponents/imagetiles";
-import ChatInput from "../components/UIComponents/chatInput";
-import RecordingModal from "../components/UIComponents/recordingmodal";
-import ChatAudioPlayer from "../components/UIComponents/chataudioplayer";
+import ChatInput from "../../components/UIComponents/chatInput";
+import RecordingModal from "../../components/UIComponents/recordingmodal";
+import ChatMessageContainer from "../../components/UIComponents/chatMessageContainer";
 
 export default class PrivateChat extends Component {
 	constructor(props) {
@@ -45,7 +43,7 @@ export default class PrivateChat extends Component {
 			modalState: "recording",
 		};
 		this.record = undefined;
-		this.unsub = null;
+		this.unsubscribe = null;
 		this.recievedSound;
 		this.inputRef = null;
 		this.listRef = null;
@@ -81,7 +79,7 @@ export default class PrivateChat extends Component {
 			});
 			audioRecording.setProgressUpdateInterval(16);
 			audioRecording.setOnRecordingStatusUpdate(
-				({ metering, isRecording, durationMillis,  }) => {
+				({ metering, isRecording, durationMillis }) => {
 					if (isRecording) {
 						this.setState({
 							metering: metering,
@@ -156,6 +154,7 @@ export default class PrivateChat extends Component {
 							created_at: firebase.firestore.FieldValue.serverTimestamp(),
 							media: url,
 							media_type: "audio",
+							looked: false,
 							sender_email: this.state.currentUserId,
 							profile_url: this.state.pfp,
 						})
@@ -185,7 +184,7 @@ export default class PrivateChat extends Component {
 			this.state.otherUserId > this.state.currentUserId
 				? this.state.currentUserId + "-" + this.state.otherUserId
 				: this.state.otherUserId + "-" + this.state.currentUserId;
-		this.unsub = db
+		this.unsubscribe = db
 			.collection("chat_sessions")
 			.doc(docId)
 			.collection("messages")
@@ -202,7 +201,7 @@ export default class PrivateChat extends Component {
 					});
 					var message = [];
 					snapshot.forEach((doc) => {
-						message.push(doc.data());
+						message.push({ ...doc.data(), docId: doc.id });
 					});
 					this.setState({
 						allMessages: message,
@@ -230,50 +229,17 @@ export default class PrivateChat extends Component {
 
 	keyExtractor = (item, index) => index.toString();
 
-	renderItem = ({ item }) => {
+	renderItem = ({ item, index }) => {
 		const { navigation } = this.props;
 		return (
-			<View
-				style={
-					item.sender_email !== this.state.currentUserId
-						? { flexDirection: "row", paddingVertical: RFValue(2.5) }
-						: { flexDirection: "row-reverse", paddingVertical: RFValue(2.5) }
-				}
-			>
-				{!item.media ? (
-					<View>
-						<Text
-							style={
-								item.sender_email !== this.state.currentUserId
-									? styles.messagePopupConatiner
-									: styles.alsoMessagePopupConatiner
-							}
-						>
-							{atob(item.message)}
-						</Text>
-					</View>
-				) : item.media_type === "image" ? (
-					<View
-						style={
-							item.sender_email !== this.state.currentUserId
-								? [styles.messagePopupConatiner, { maxWidth: RFValue(350) }]
-								: [styles.alsoMessagePopupConatiner, { maxWidth: RFValue(350) }]
-						}
-					>
-						<ImageTiles navigation={navigation} item={item} />
-					</View>
-				) : item.media_type === "audio" ? (
-					<View
-						style={
-							item.sender_email !== this.state.currentUserId
-								? [styles.messagePopupConatiner, { maxWidth: RFValue(350) }]
-								: [styles.alsoMessagePopupConatiner, { maxWidth: RFValue(350) }]
-						}
-					>
-						<ChatAudioPlayer item={item} />
-					</View>
-				) : null}
-			</View>
+			<ChatMessageContainer
+				item={item}
+				navigation={navigation}
+				currentUserId={this.state.currentUserId}
+				otherUserId={this.state.otherUserId}
+				index={index}
+				fulldata={this.state.allMessages}
+			/>
 		);
 	};
 
@@ -295,6 +261,7 @@ export default class PrivateChat extends Component {
 		if (this.recievedSound) {
 			await this.recievedSound.unloadAsync();
 		}
+		this.unsubscribe();
 	}
 
 	render() {

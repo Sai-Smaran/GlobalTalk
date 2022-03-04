@@ -7,7 +7,7 @@ import {
 	TouchableOpacity,
 	Alert,
 } from "react-native";
-import { Avatar, Input, Icon } from "react-native-elements";
+import { Avatar, Input, Icon, Divider } from "react-native-elements";
 import {
 	getCameraPermissionsAsync,
 	requestCameraPermissionsAsync,
@@ -160,35 +160,54 @@ export default class UserInfoEditingScreen extends Component {
 	editModal = () => (
 		<Modal
 			animationType="fade"
-			transparent={true}
+			transparent
 			visible={this.state.modalView}
 			onRequestClose={() => this.setState({ modalView: false })}
 		>
-			<View style={styles.modalStyle}>
-				<TouchableOpacity
+			<View
+				style={{
+					width: "100%",
+					height: "100%",
+					justifyContent: "center",
+					alignItems: "center",
+				}}
+			>
+				<View
 					style={{
-						flexDirection: "row",
-						alignItems: "center",
-						borderBottomWidth: 2,
-						borderBottomColor: "gray",
-						height: "50%",
-					}}
-					onPress={() => {
-						this.selectPicture();
+						backgroundColor: "whitesmoke",
+						width: "50%",
+						height: RFValue(80),
+						elevation: 16,
 					}}
 				>
-					<Icon name="add-photo-alternate" type="material" size={RFValue(40)} />
-					<Text>Select a photo from gallery</Text>
-				</TouchableOpacity>
-				<TouchableOpacity
-					style={{ flexDirection: "row", alignItems: "center" }}
-					onPress={async () => {
-						await this.getCameraPermissions();
-					}}
-				>
-					<Icon name="add-a-photo" type="material" size={RFValue(40)} />
-					<Text>Take a photo</Text>
-				</TouchableOpacity>
+					<TouchableOpacity
+						style={styles.changePfpBtn}
+						onPress={async ()=>{
+							await this.takePicture()
+						}}
+					>
+						<Icon name="add-a-photo" color="black" size={RFValue(25)} />
+						<Text style={{ fontSize: RFValue(10), left: 10 }}>
+							Take a picture
+						</Text>
+					</TouchableOpacity>
+					<Divider
+						orientation="horizontal"
+						style={{ width: "95%", alignSelf: "center" }}
+						width={1.5}
+					/>
+					<TouchableOpacity
+						style={styles.changePfpBtn}
+						onPress={async ()=>{
+							await this.selectPicture()
+						}}
+					>
+						<Icon name="add-photo-alternate" color="black" size={RFValue(30)} />
+						<Text style={{ fontSize: RFValue(10), left: 10 }}>
+							Pick a photo from gallery
+						</Text>
+					</TouchableOpacity>
+				</View>
 			</View>
 		</Modal>
 	);
@@ -288,5 +307,11 @@ const styles = StyleSheet.create({
 		alignSelf: "center",
 		elevation: 32,
 		marginTop: RFValue(250),
+	},
+	changePfpBtn: {
+		flexDirection: "row",
+		justifyContent: "flex-start",
+		alignItems: "center",
+		padding: 10,
 	},
 });

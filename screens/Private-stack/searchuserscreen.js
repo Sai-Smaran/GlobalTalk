@@ -2,8 +2,8 @@ import React, { Component } from "react";
 import { View, FlatList, Platform, Dimensions } from "react-native";
 import { SearchBar, ListItem, Avatar } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
-import MyDrawerHeader from "../components/MyHeaders/MyDrawerHeader";
-import db from "../config";
+import MyDrawerHeader from "../../components/MyHeaders/MyDrawerHeader";
+import db from "../../config";
 import firebase from "firebase";
 
 export default class SearchUser extends Component {

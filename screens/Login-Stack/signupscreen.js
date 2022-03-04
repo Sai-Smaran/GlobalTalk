@@ -9,9 +9,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
-import db from "../config";
+import db from "../../config";
 import firebase from "firebase";
-import MyStackHeader from "../components/MyHeaders/MyStackHeader";
+import MyStackHeader from "../../components/MyHeaders/MyStackHeader";
 
 export default class SignUpScreen extends Component {
   constructor(props) {

@@ -1,10 +1,10 @@
 import {
 	View,
 	Text,
-	Dimensions,
 	Modal,
 	TouchableOpacity,
 	StyleSheet,
+	useWindowDimensions,
 } from "react-native";
 import React from "react";
 import Waves from "./waves";
@@ -20,6 +20,8 @@ export default function RecordingModal({
 	progress,
 	onStopRecording,
 }) {
+	const { width } = useWindowDimensions();
+
 	function formatTimeString(time, showMsecs) {
 		let msecs = time % 1000;
 
@@ -48,7 +50,6 @@ export default function RecordingModal({
 		return formatted;
 	}
 
-	const { width } = Dimensions.get("window");
 	return (
 		<Modal
 			transparent

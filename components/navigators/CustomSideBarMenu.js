@@ -9,6 +9,7 @@ import {
 	DrawerContentScrollView,
 	DrawerItemList,
 } from "@react-navigation/drawer";
+import { DeviceType, getDeviceTypeAsync } from "expo-device";
 
 export default class CustomSideBarMenu extends Component {
 	constructor(props) {
@@ -19,6 +20,14 @@ export default class CustomSideBarMenu extends Component {
 			userName: "",
 			docId: "",
 			width: 0,
+			currentDeviceType: "",
+		};
+		this.deviceTypeMap = {
+			[DeviceType.UNKNOWN]: "unknown",
+			[DeviceType.PHONE]: "phone",
+			[DeviceType.TABLET]: "tablet",
+			[DeviceType.DESKTOP]: "desktop",
+			[DeviceType.TV]: "tv",
 		};
 	}
 
@@ -53,9 +62,14 @@ export default class CustomSideBarMenu extends Component {
 			});
 	}
 
-	componentDidMount() {
+	async componentDidMount() {
 		this.fetchImage(this.state.userId);
 		this.getUserProfile();
+		await getDeviceTypeAsync().then((dev) => {
+			this.setState({
+				currentDeviceType: this.deviceTypeMap[dev],
+			});
+		});
 	}
 
 	render() {
@@ -69,7 +83,15 @@ export default class CustomSideBarMenu extends Component {
 							justifyContent: "center",
 							alignItems: "center",
 							backgroundColor: "#32867d",
-							flexDirection: width >= 1024 ? "row" : "column",
+							flexDirection:
+								this.state.currentDeviceType === "tablet" ||
+								this.state.currentDeviceType === "desktop"
+									? width >= 1024
+										? "row"
+										: "column"
+									: width >= 480
+									? "row"
+									: "column",
 						},
 					]}
 				>
@@ -78,7 +100,16 @@ export default class CustomSideBarMenu extends Component {
 						source={{
 							uri: this.state.image,
 						}}
-						size={width >= 1024 ? "large" : "xlarge"}
+						size={
+							this.state.currentDeviceType === "tablet" ||
+							this.state.currentDeviceType === "desktop"
+								? width >= 1024
+									? "large"
+									: "xlarge"
+								: width >= 480
+								? "small"
+								: "large"
+						}
 						showEditButton
 						title={this.state.userName.charAt(0).toUpperCase()}
 					/>
@@ -86,7 +117,7 @@ export default class CustomSideBarMenu extends Component {
 					<Text
 						style={{
 							fontWeight: "bold",
-							fontSize: RFValue(20),
+							fontSize: RFValue(25),
 							color: "#fff",
 							padding: RFValue(10),
 						}}
@@ -97,20 +128,27 @@ export default class CustomSideBarMenu extends Component {
 				<DrawerContentScrollView {...this.props} style={{ flex: 0.6 }}>
 					<DrawerItemList {...this.props} />
 				</DrawerContentScrollView>
-				<View style={{ flex: 0.1 }}>
+				<View
+					style={{
+						flex: 0.1,
+						borderTopWidth: 1,
+						borderTopColor: "#696969",
+						justifyContent: "center",
+						alignItems: "center",
+					}}
+				>
 					<TouchableOpacity
 						style={{
 							flexDirection: "row",
 							width: "100%",
 							height: "100%",
+							justifyContent: "flex-start",
+							alignItems: "center",
 						}}
 						onPress={() => {
 							firebase
 								.auth()
 								.signOut()
-								.then(() => {
-									this.props.navigation.navigate("Stack");
-								});
 						}}
 					>
 						<Icon

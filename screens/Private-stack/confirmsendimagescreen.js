@@ -6,8 +6,8 @@ import ImageView from "react-native-image-viewing";
 import { RFValue } from "react-native-responsive-fontsize";
 import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 import firebase from "firebase";
-import db from "../config";
-import CircularProgress from "../components/UIComponents/circular-progress";
+import db from "../../config";
+import CircularProgress from "../../components/UIComponents/circular-progress";
 import { setStatusBarHidden } from "expo-status-bar";
 
 export default class ConfirmSendImage extends Component {
@@ -50,9 +50,10 @@ export default class ConfirmSendImage extends Component {
       console.log("Can't find user's token");
       return;
     }
-    await fetch("https://exp.host/--/api/v2/push/send", {
+    const response = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
       headers: {
+        Accept: 'application/json',
         "Content-type": "application/json",
       },
       body: JSON.stringify({
@@ -61,9 +62,8 @@ export default class ConfirmSendImage extends Component {
         title: this.state.userName,
         body: "Image 📷",
       }),
-    }).catch((err) => {
-      console.log(err);
     });
+    console.log(response.status)
   };
 
   sendMessage = (imgArray) => {
