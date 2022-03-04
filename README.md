@@ -5,6 +5,7 @@ GlobalTalk is a platform in which you can talk to everyone publicly, or privatel
 ## TODOs 
 
 - [x] Add ability to send and view photos and voice messages. 
+- [ ] Convert whole project to use `TypeScript`
 - [ ] Add ability to send and view videos and any other arbitrary file type. 
 - [ ] Add authentication using google and facebook. 
 - [ ] Make the app decentralised using `gun.js`
