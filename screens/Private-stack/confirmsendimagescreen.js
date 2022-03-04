@@ -8,7 +8,6 @@ import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
 import firebase from "firebase";
 import db from "../../config";
 import CircularProgress from "../../components/UIComponents/circular-progress";
-import { setStatusBarHidden } from "expo-status-bar";
 
 export default class ConfirmSendImage extends Component {
   constructor(props) {

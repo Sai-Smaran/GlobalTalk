@@ -1,12 +1,12 @@
 import React from "react"
-import SearchUser from "../../screens/searchuserscreen";
-import PrivateChat from "../../screens/privatechatscreen";
-import AboutUser from "../../screens/aboutuserscreen";
+import SearchUser from "../../screens/Private-stack/searchuserscreen";
+import PrivateChat from "../../screens/Private-stack/privatechatscreen";
+import AboutUser from "../../screens/Private-stack/aboutuserscreen";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import ConfirmSendImage from "../../screens/confirmsendimagescreen";
-import EditImageScreen from "../../screens/editimagescreen";
-import SentImgList from "../../screens/sentimagelistscreen";
-import ImageView from "../../screens/imageviewscreen";
+import ConfirmSendImage from "../../screens/Private-stack/confirmsendimagescreen";
+import EditImageScreen from "../../screens/Private-stack/editimagescreen";
+import SentImgList from "../../screens/Private-stack/sentimagelistscreen";
+import ImageView from "../../screens/Private-stack/imageviewscreen";
 
 const Stack = createNativeStackNavigator();
 

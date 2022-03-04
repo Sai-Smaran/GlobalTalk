@@ -1,9 +1,8 @@
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Audio } from "expo-av";
 import { Icon } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
-import { useFocusEffect } from "@react-navigation/native";
 
 export default function ChatAudioPlayer({ item }) {
 	const [playbackObj] = useState(new Audio.Sound());
