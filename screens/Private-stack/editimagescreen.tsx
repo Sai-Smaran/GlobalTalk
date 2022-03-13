@@ -1,12 +1,21 @@
 import React, { Component } from "react";
 import { setStatusBarHidden } from "expo-status-bar";
 
-export default class EditImageScreen extends Component {
-  constructor(props) {
+interface Props {
+  route: any
+}
+
+interface State {
+  editImgNo: number
+  imageData: {uri: string}[]
+}
+
+export default class EditImageScreen extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = {
-      editImgNo: this.props.navigation.getParam("imgIndex"),
-      imageData: this.props.navigation.getParam("image"),
+      editImgNo: this.props.route.params.imgIndex,
+      imageData: this.props.route.params.image,
     };
   }
 

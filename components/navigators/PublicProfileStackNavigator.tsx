@@ -1,11 +1,11 @@
 import React from "react";
 import PublicChat from "../../screens/publicchatscreen";
-import AboutUserScreen from "../../screens/aboutuserscreen";
+import AboutUserScreen from "../../screens/Private-stack/aboutuserscreen";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const Stack = createNativeStackNavigator();
 
-export default function PublicChatStackNavigator(props) {
+export default function PublicChatStackNavigator() {
   return (
     <Stack.Navigator
       initialRouteName="Public"

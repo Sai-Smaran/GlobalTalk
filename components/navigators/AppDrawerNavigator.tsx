@@ -4,7 +4,6 @@ import { useWindowDimensions, StyleSheet } from "react-native";
 import { DeviceType, getDeviceTypeAsync } from "expo-device";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { RFValue } from "react-native-responsive-fontsize";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import PrivateChatStackNavigator from "./PrivateChatStackNavigator";
 import CustomSideBarMenu from "./CustomSideBarMenu";
@@ -25,8 +24,8 @@ export default function AppDrawerNavigator() {
 		[DeviceType.TV]: "tv",
 	};
 
-	React.useEffect(async () => {
-		await getDeviceTypeAsync().then((dev) => {
+	React.useEffect(() => {
+		getDeviceTypeAsync().then((dev) => {
 			setcurrentDeviceType(deviceTypeMap[dev]);
 		});
 	}, []);

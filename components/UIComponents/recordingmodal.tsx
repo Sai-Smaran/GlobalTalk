@@ -22,8 +22,8 @@ export default function RecordingModal({
 }) {
 	const { width } = useWindowDimensions();
 
-	function formatTimeString(time, showMsecs) {
-		let msecs = time % 1000;
+	function formatTimeString(time: number) {
+		let msecs: string | number = time % 1000;
 
 		if (msecs < 10) {
 			msecs = `00${msecs}`;
@@ -36,16 +36,11 @@ export default function RecordingModal({
 		let hours = Math.floor(time / 3600000);
 		seconds = seconds - minutes * 60;
 		minutes = minutes - hours * 60;
-		let formatted;
-		if (showMsecs) {
-			formatted = `${hours < 10 ? 0 : ""}${hours}:${
-				minutes < 10 ? 0 : ""
-			}${minutes}:${seconds < 10 ? 0 : ""}${seconds}:${msecs}`;
-		} else {
-			formatted = `${hours < 10 ? 0 : ""}${hours}:${
-				minutes < 10 ? 0 : ""
-			}${minutes}:${seconds < 10 ? 0 : ""}${seconds}`;
-		}
+
+		let formatted: string;
+		formatted = `${hours < 10 ? 0 : ""}${hours}:${
+			minutes < 10 ? 0 : ""
+		}${minutes}:${seconds < 10 ? 0 : ""}${seconds}`;
 
 		return formatted;
 	}

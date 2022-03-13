@@ -14,15 +14,69 @@ import { v4 as uuid } from "uuid";
 import { RFValue } from "react-native-responsive-fontsize";
 import db from "../../config";
 import firebase from "firebase";
-import MyStackHeader from "../../components/MyHeaders/MyStackHeader";
+import { MyStackHeader } from "../../components/UIComponents/MyHeaders";
 import { Audio } from "expo-av";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import ChatInput from "../../components/UIComponents/chatInput";
 import RecordingModal from "../../components/UIComponents/recordingmodal";
 import ChatMessageContainer from "../../components/UIComponents/chatMessageContainer";
 
-export default class PrivateChat extends Component {
-	constructor(props) {
+interface Props {
+	route: any;
+	navigation: any;
+}
+
+interface State {
+	currentUserId: string;
+	inputMessage: string;
+	allMessages: (Message | ImageMsg | AudioMsg)[];
+	userName: string;
+	otherUserId: string;
+	otherUserName: string;
+	expoPushToken: string;
+	record: Audio.Recording;
+	metering: number;
+	recordingModalVisible: boolean;
+	duration: number;
+	width: number;
+	progress: number;
+	pfp: "#" | string;
+	modalState: "recording"|"sending"|"fail"
+}
+
+interface Message {
+	created_at: firebase.firestore.FieldValue;
+	looked: boolean;
+	message: string;
+	sender_email: string;
+}
+
+interface ImageMsg {
+	created_at: firebase.firestore.FieldValue;
+	looked: boolean;
+	media: string[];
+	media_type: "image";
+	sender_email: string;
+	sender_name: string;
+}
+
+interface AudioMsg {
+	created_at: firebase.firestore.FieldValue;
+	looked: boolean;
+	media: "audio";
+	profile_url: string;
+	sender_email: string;
+}
+
+export default class PrivateChat extends Component<Props, State> {
+	
+	record: Audio.Recording;
+	unsubscribe: any;
+	recievedSound: Audio.Sound;
+	listRef: FlatList<any>;
+	dimensionsListener: any;
+
+	constructor(props: Props) {
 		super(props);
 		this.state = {
 			currentUserId: firebase.auth().currentUser.email,
@@ -32,7 +86,6 @@ export default class PrivateChat extends Component {
 			otherUserId: this.details.email,
 			otherUserName: this.details.user_name,
 			expoPushToken: this.details.push_token,
-			recieved: false,
 			record: null,
 			metering: -120,
 			recordingModalVisible: false,
@@ -45,8 +98,8 @@ export default class PrivateChat extends Component {
 		this.record = undefined;
 		this.unsubscribe = null;
 		this.recievedSound;
-		this.inputRef = null;
 		this.listRef = null;
+		this.dimensionsListener
 	}
 
 	details = this.props.route.params.details;
@@ -118,7 +171,7 @@ export default class PrivateChat extends Component {
 		});
 	};
 
-	sendRecording = async (uri) => {
+	sendRecording = async (uri: string) => {
 		const response = await fetch(uri);
 		const blob = await response.blob();
 		const randomId = uuid();
@@ -173,7 +226,7 @@ export default class PrivateChat extends Component {
 
 	loadRecievedSound = async () => {
 		const { sound } = await Audio.Sound.createAsync(
-			require("../assets/sounds/recieve.mp3")
+			require("../../assets/sounds/recieve.mp3")
 		);
 
 		this.recievedSound = sound;
@@ -236,9 +289,6 @@ export default class PrivateChat extends Component {
 				item={item}
 				navigation={navigation}
 				currentUserId={this.state.currentUserId}
-				otherUserId={this.state.otherUserId}
-				index={index}
-				fulldata={this.state.allMessages}
 			/>
 		);
 	};
@@ -261,6 +311,7 @@ export default class PrivateChat extends Component {
 		if (this.recievedSound) {
 			await this.recievedSound.unloadAsync();
 		}
+		this.dimensionsListener.remove()
 		this.unsubscribe();
 	}
 
@@ -304,7 +355,7 @@ export default class PrivateChat extends Component {
 								}}
 							>
 								<Image
-									source={require("../assets/static-images/sad-bubble.png")}
+									source={require("../../assets/static-images/sad-bubble.png")}
 									width={288}
 									height={287}
 								/>

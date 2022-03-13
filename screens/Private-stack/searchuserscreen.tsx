@@ -2,13 +2,23 @@ import React, { Component } from "react";
 import { View, FlatList, Platform, Dimensions } from "react-native";
 import { SearchBar, ListItem, Avatar } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
-import MyDrawerHeader from "../../components/MyHeaders/MyDrawerHeader";
+import { MyDrawerHeader } from "../../components/UIComponents/MyHeaders"
 import db from "../../config";
 import firebase from "firebase";
 
-export default class SearchUser extends Component {
-  constructor() {
-    super();
+interface Props {
+  navigation: any
+}
+
+interface State {
+  userId: string
+  search: string
+  allResults: any[]
+}
+
+export default class SearchUser extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
     this.state = {
       userId: firebase.auth().currentUser.email,
       search: "",
@@ -35,9 +45,9 @@ export default class SearchUser extends Component {
       });
   };
 
-  keyExtractor = (item, index) => index.toString();
+  keyExtractor = (_, index: number) => index.toString();
 
-  aboutShortener = (message) => {
+  aboutShortener = (message: string) => {
     let charLen = Math.round(Dimensions.get("window").width / 13);
     console.log(charLen);
     if (message.length > charLen) {
@@ -47,7 +57,7 @@ export default class SearchUser extends Component {
     }
   };
 
-  renderItem = ({ item, i }) => (
+  renderItem = ({ item }) => (
     <ListItem
       onPress={() => {
           this.props.navigation.navigate("Chat", {
@@ -84,7 +94,7 @@ export default class SearchUser extends Component {
           navigation={this.props.navigation}
         />
         <SearchBar
-          platform={Platform.OS}
+          platform="android"
           autoCapitalize="none"
           autoCorrect={false}
           clearButtonMode="while-editing"

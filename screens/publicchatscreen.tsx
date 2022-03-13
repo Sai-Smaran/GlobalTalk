@@ -16,9 +16,8 @@ import { RFValue } from "react-native-responsive-fontsize";
 import db from "../config";
 import firebase from "firebase";
 import { isDevice } from "expo-device";
-import MyDrawerHeader from "../components/MyHeaders/MyDrawerHeader";
+import { MyDrawerHeader } from "../components/UIComponents/MyHeaders";
 import * as Notifications from "expo-notifications";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 Notifications.setNotificationHandler({
 	handleNotification: async () => ({
@@ -28,22 +27,43 @@ Notifications.setNotificationHandler({
 	}),
 });
 
-export default class PublicChat extends Component {
-	constructor() {
-		super();
+interface Props {
+	navigation: any;
+}
+
+interface State {
+	userId: string;
+	inputMessage: string;
+	allMessages: Message[];
+	userName: string;
+	pfpUrl: "#" | string;
+	docId: string
+}
+
+interface Message {
+	created_at: firebase.firestore.FieldValue;
+	looked: boolean;
+	message: string;
+	sender_email: string;
+}
+
+export default class PublicChat extends Component<Props, State> {
+	inputRef: TextInput;
+	listRef: FlatList<any>;
+	unsubscribe: any;
+	constructor(props: Props) {
+		super(props);
 		this.state = {
 			userId: firebase.auth().currentUser.email,
 			inputMessage: "",
 			allMessages: [],
 			userName: "",
 			pfpUrl: "#",
-			unsubscribe: null,
 			docId: "",
-			notification: {},
 		};
+		this.unsubscribe = null;
 		this.inputRef = null;
 		this.listRef = null;
-		this.backHandler;
 	}
 
 	registerForPushNotificationsAsync = async () => {
@@ -69,25 +89,6 @@ export default class PublicChat extends Component {
 				console.log(error);
 			}
 		}
-	};
-
-	exitPrompt = () => {
-		Alert.alert(
-			"Exit app?",
-			"Are you sure you want to exit this app?",
-			[
-				{
-					text: "NO",
-					onPress: () => {},
-				},
-				{
-					text: "YES",
-					onPress: () => BackHandler.exitApp(),
-				},
-			],
-			{ cancelable: true }
-		);
-		return true;
 	};
 
 	fetchUserImage = () => {
@@ -141,7 +142,7 @@ export default class PublicChat extends Component {
 			});
 	}
 
-	keyExtractor = (item, index) => index.toString();
+	keyExtractor = (_, index) => index.toString();
 
 	renderItem = ({ item }) => {
 		return (
@@ -180,7 +181,7 @@ export default class PublicChat extends Component {
 		);
 	};
 
-	sendMessage = (message) => {
+	sendMessage = (message: string) => {
 		db.collection("messages")
 			.add({
 				created_at: firebase.firestore.FieldValue.serverTimestamp(),
@@ -197,10 +198,6 @@ export default class PublicChat extends Component {
 	};
 
 	componentDidMount() {
-		this.backHandler = BackHandler.addEventListener(
-			"hardwareBackPress",
-			this.exitPrompt
-		);
 		this.getAllPublicMessages();
 		this.fetchUserImage();
 		this.getUserName();
@@ -208,90 +205,89 @@ export default class PublicChat extends Component {
 
 	componentWillUnmount() {
 		this.unsubscribe();
-		this.backHandler.remove();
 	}
 
 	render() {
 		return (
-				<KeyboardAvoidingView
-					behavior="padding"
-					keyboardVerticalOffset={-165}
-					style={{ flex: 1 }}
-				>
-					<MyDrawerHeader
-						title="Public chat"
-						navigation={this.props.navigation}
-					/>
-					<View style={{ height: "80%", backgroundColor: "#ebebeb" }}>
-						{this.state.allMessages.length !== 0 ? (
-							<FlatList
-								keyExtractor={this.keyExtractor}
-								data={this.state.allMessages}
-								renderItem={this.renderItem}
-								ref={(chatlist) => (this.listRef = chatlist)}
-								style={{ flex: 0 }}
-							/>
-						) : (
-							<View
-								style={{
-									flex: 1,
-									justifyContent: "center",
-									alignItems: "center",
-								}}
-							>
-								<Image
-									source={require("../assets/static-images/sad-bubble.png")}
-									width={288}
-									height={287}
-								/>
-								<Text style={{ color: "#9c9c9c" }}>
-									Chat activity seems to be pretty dry today...
-								</Text>
-							</View>
-						)}
-					</View>
-					<View
-						style={{
-							flex: 1,
-							flexDirection: "row",
-							backgroundColor: "#ebebeb",
-							justifySelf: "flex-end",
-							justifyContent: "center",
-						}}
-					>
-						<TextInput
-							style={styles.chatInput}
-							placeholder="Type something here..."
-							maxLength={128}
-							ref={(input) => (this.inputRef = input)}
-							onChangeText={(text) =>
-								this.setState({
-									inputMessage: text,
-								})
-							}
-							value={this.state.inputMessage}
-							numberOfLines={1}
-							multiline
-							passwordRules=""
+			<KeyboardAvoidingView
+				behavior="padding"
+				keyboardVerticalOffset={-165}
+				style={{ flex: 1 }}
+			>
+				<MyDrawerHeader
+					title="Public chat"
+					navigation={this.props.navigation}
+				/>
+				<View style={{ height: "80%", backgroundColor: "#ebebeb" }}>
+					{this.state.allMessages.length !== 0 ? (
+						<FlatList
+							keyExtractor={this.keyExtractor}
+							data={this.state.allMessages}
+							renderItem={this.renderItem}
+							ref={(chatlist) => (this.listRef = chatlist)}
+							style={{ flex: 0 }}
 						/>
-						<TouchableOpacity
-							onPress={() => {
-								if (this.state.inputMessage.trim() !== "") {
-									this.sendMessage(this.state.inputMessage);
-								}
+					) : (
+						<View
+							style={{
+								flex: 1,
+								justifyContent: "center",
+								alignItems: "center",
 							}}
 						>
-							<Icon
-								name="paper-plane"
-								type="font-awesome"
-								reverse
-								raised={true}
-								size={RFValue(30)}
-								color="#80AED7"
+							<Image
+								// @ts-ignore
+								source={require("../assets/static-images/sad-bubble.png")}
+								width={288}
+								height={287}
 							/>
-						</TouchableOpacity>
-					</View>
-				</KeyboardAvoidingView>
+							<Text style={{ color: "#9c9c9c" }}>
+								Chat activity seems to be pretty dry today...
+							</Text>
+						</View>
+					)}
+				</View>
+				<View
+					style={{
+						flex: 1,
+						flexDirection: "row",
+						backgroundColor: "#ebebeb",
+						justifyContent: "center",
+					}}
+				>
+					<TextInput
+						style={styles.chatInput}
+						placeholder="Type something here..."
+						maxLength={128}
+						ref={(input) => (this.inputRef = input)}
+						onChangeText={(text) =>
+							this.setState({
+								inputMessage: text,
+							})
+						}
+						value={this.state.inputMessage}
+						numberOfLines={1}
+						multiline
+						passwordRules=""
+					/>
+					<TouchableOpacity
+						onPress={() => {
+							if (this.state.inputMessage.trim() !== "") {
+								this.sendMessage(this.state.inputMessage);
+							}
+						}}
+					>
+						<Icon
+							name="paper-plane"
+							type="font-awesome"
+							reverse
+							raised
+							size={RFValue(30)}
+							color="#80AED7"
+						/>
+					</TouchableOpacity>
+				</View>
+			</KeyboardAvoidingView>
 		);
 	}
 }

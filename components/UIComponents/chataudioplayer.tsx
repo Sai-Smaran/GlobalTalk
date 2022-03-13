@@ -1,17 +1,24 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Audio } from "expo-av";
-import { Icon } from "react-native-elements";
+import { MaterialIcons as MIcon, FontAwesome5 as FA5Icon } from "@expo/vector-icons";
 import { RFValue } from "react-native-responsive-fontsize";
 
-export default function ChatAudioPlayer({ item }) {
+interface ChatAudioPlayerProps {
+	item: {
+		media: string,
+		profile_url: string
+	}
+}
+
+export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
 	const [playbackObj] = useState(new Audio.Sound());
 	const [soundObj, setSoundObj] = useState(null);
 	const [currentAudio, setCurrentAudio] = useState("#");
 
 	async function handleAudio() {
 		if (!playbackObj) {
-			const sound = playbackObj.loadAsync(
+			playbackObj.loadAsync(
 				{ uri: item.media },
 				{ shouldPlay: true }
 			);
@@ -44,13 +51,13 @@ export default function ChatAudioPlayer({ item }) {
 				<Image
 					source={{ uri: item.profile_url }}
 					style={{
+						...StyleSheet.absoluteFillObject,
 						width: RFValue(50),
 						height: RFValue(50),
 						borderRadius: 250,
-						...StyleSheet.absoluteFill,
 					}}
 				/>
-				<Icon
+				<MIcon
 					name="mic"
 					iconStyle={{
 						backgroundColor: "whitesmoke",
@@ -64,11 +71,11 @@ export default function ChatAudioPlayer({ item }) {
 					await handleAudio();
 				}}
 			>
-				<Icon
+				<FA5Icon
 					name={
 						soundObj
 							? soundObj.isPlaying
-								? soundObj.didJsutFinish
+								? soundObj.didJustFinish
 									? "play"
 									: "pause"
 								: "play"

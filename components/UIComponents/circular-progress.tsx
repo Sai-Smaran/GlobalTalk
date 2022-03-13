@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, StyleProp, TextStyle } from "react-native";
 import Animated, {
 	Easing,
 	useAnimatedProps,
@@ -23,6 +23,18 @@ const STROKE = "#A6E1FA";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
+interface Props {
+	secondaryBackgroundStroke?: string,
+	progress: number,
+	mainBackgroundStroke?: string | undefined,
+	percentageTextStyle?: StyleProp<TextStyle>,
+	counterTextStyle?: StyleProp<TextStyle>,
+	secondaryStroke?: string,
+	mainStroke?: string,
+	maxCount?: number ,
+	count?: number,
+}
+
 export default function CircularProgress({
 	secondaryBackgroundStroke,
 	progress: progressProp,
@@ -33,7 +45,7 @@ export default function CircularProgress({
 	mainStroke,
 	maxCount,
 	count,
-}) {
+}: Props): JSX.Element {
 	const progress = useSharedValue(0);
 
 	const secondaryProgress = useSharedValue(0);
@@ -90,14 +102,14 @@ export default function CircularProgress({
 					cx={RFValue(125)}
 					cy={RFValue(125)}
 					r={r}
-					stroke={mainBackgroundStroke || BACKGROUND_STROKE}
+					stroke={mainBackgroundStroke ?? BACKGROUND_STROKE}
 					strokeWidth={35}
 				/>
 				<AnimatedCircle
 					cx={RFValue(125)}
 					cy={RFValue(125)}
 					r={r}
-					stroke={mainStroke || STROKE}
+					stroke={mainStroke ?? STROKE}
 					strokeWidth={25}
 					strokeDasharray={CIRCLE_LENGTH}
 					animatedProps={mainAnimatedProps}
@@ -109,7 +121,7 @@ export default function CircularProgress({
 							cx={RFValue(125)}
 							cy={RFValue(125)}
 							r={R}
-							stroke={secondaryBackgroundStroke || BACKGROUND_STROKE}
+							stroke={secondaryBackgroundStroke ?? BACKGROUND_STROKE}
 							strokeWidth={35}
 						/>
 
@@ -117,7 +129,7 @@ export default function CircularProgress({
 							cx={RFValue(125)}
 							cy={RFValue(125)}
 							r={R}
-							stroke={secondaryStroke || "#00c8ff"}
+							stroke={secondaryStroke ?? "#00c8ff"}
 							strokeWidth={25}
 							strokeDasharray={SECONDARY_CIRCLE_LENGTH}
 							animatedProps={secondaryAnimatedProps}

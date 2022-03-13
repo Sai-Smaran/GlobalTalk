@@ -16,11 +16,24 @@ import {
 	MediaTypeOptions,
 } from "expo-image-picker";
 import { RFValue } from "react-native-responsive-fontsize";
-import MyDrawerHeader from "../components/MyHeaders/MyDrawerHeader";
+import { MyDrawerHeader } from "../components/UIComponents/MyHeaders";
 import firebase from "firebase";
 import db from "../config";
 
-export default class UserInfoEditingScreen extends Component {
+interface Props {
+	navigation: any;
+}
+
+interface State {
+	userId: string;
+	docId: string;
+	about: string
+	image: "#"|string
+	userName: string
+	modalView: boolean
+}
+
+export default class UserInfoEditingScreen extends Component<Props, State> {
 	state = {
 		userId: firebase.auth().currentUser.email,
 		docId: "",
@@ -47,7 +60,7 @@ export default class UserInfoEditingScreen extends Component {
 		await this.takePicture();
 	};
 
-	generateKeywords = (userName) => {
+	generateKeywords = (userName: string) => {
 		const wordArr = userName.toLowerCase().split(" ");
 		const searchableKeywords = [];
 		let prevKey = "";
@@ -65,6 +78,7 @@ export default class UserInfoEditingScreen extends Component {
 	};
 
 	takePicture = async () => {
+		//@ts-ignore
 		const { cancelled, uri } = await launchCameraAsync({
 			mediaTypes: MediaTypeOptions.Images,
 			allowsEditing: true,
@@ -80,6 +94,7 @@ export default class UserInfoEditingScreen extends Component {
 	};
 
 	selectPicture = async () => {
+		//@ts-ignore
 		const { cancelled, uri } = await launchImageLibraryAsync({
 			mediaTypes: MediaTypeOptions.Images,
 			allowsEditing: true,
@@ -94,7 +109,7 @@ export default class UserInfoEditingScreen extends Component {
 		}
 	};
 
-	uploadImage = async (uri, imageName) => {
+	uploadImage = async (uri: string, imageName: string) => {
 		var response = await fetch(uri);
 		var blob = await response.blob();
 
@@ -103,12 +118,12 @@ export default class UserInfoEditingScreen extends Component {
 			.ref()
 			.child("user_profiles/" + imageName);
 
-		return ref.put(blob).then((response) => {
+		return ref.put(blob).then(() => {
 			this.fetchImage(imageName);
 		});
 	};
 
-	fetchImage = (imageName) => {
+	fetchImage = (imageName: string) => {
 		var storageRef = firebase
 			.storage()
 			.ref()
@@ -141,7 +156,7 @@ export default class UserInfoEditingScreen extends Component {
 			});
 	}
 
-	updateProfile(username, about) {
+	updateProfile(username: string, about: string) {
 		db.collection("users")
 			.doc(this.state.docId)
 			.update({
@@ -182,8 +197,8 @@ export default class UserInfoEditingScreen extends Component {
 				>
 					<TouchableOpacity
 						style={styles.changePfpBtn}
-						onPress={async ()=>{
-							await this.takePicture()
+						onPress={async () => {
+							await this.takePicture();
 						}}
 					>
 						<Icon name="add-a-photo" color="black" size={RFValue(25)} />
@@ -198,8 +213,8 @@ export default class UserInfoEditingScreen extends Component {
 					/>
 					<TouchableOpacity
 						style={styles.changePfpBtn}
-						onPress={async ()=>{
-							await this.selectPicture()
+						onPress={async () => {
+							await this.selectPicture();
 						}}
 					>
 						<Icon name="add-photo-alternate" color="black" size={RFValue(30)} />
@@ -227,9 +242,7 @@ export default class UserInfoEditingScreen extends Component {
 					}}
 					onPress={() => this.setState({ modalView: true })}
 					size={"xlarge"}
-					showEditButton
 					title={this.state.userName.charAt(0).toUpperCase()}
-					raised={true}
 				/>
 				<Input
 					label="User name"
@@ -262,9 +275,8 @@ export default class UserInfoEditingScreen extends Component {
 						padding: 10,
 					}}
 					maxLength={50}
-					numberOfLines={8}
 					textAlignVertical="top"
-					containerStyle={[styles.inputStyle]}
+					containerStyle={styles.inputStyle}
 					placeholder="Describe yourself....."
 					value={this.state.about}
 				/>

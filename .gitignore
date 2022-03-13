@@ -9,6 +9,7 @@ npm-debug.*
 web-build/
 *.db
 .vscode/
+reset dependencies.bat
 
 # macOS
 .DS_Store

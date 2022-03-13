@@ -8,7 +8,8 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { enableScreens } from "react-native-screens";
 import firebase from "firebase";
 
-LogBox.ignoreLogs([`Setting a timer for a long period`], [`AsyncStorage has been`]);
+LogBox.ignoreLogs([`Setting a timer for a long period`]);
+LogBox.ignoreLogs(["AsyncStorage has been extracted"])
 
 const Stack = createStackNavigator();
 

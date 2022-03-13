@@ -8,17 +8,48 @@ import { encrypt as btoa } from "../customBase64Encryption";
 import { RFValue } from "react-native-responsive-fontsize";
 import { Icon } from "react-native-elements";
 
+interface Props {
+	otherUserId: string;
+	navigation: any;
+	expoPushToken: string;
+	userName: string;
+	onRecord: () => void;
+}
+
 export default function ChatInput({
 	otherUserId,
 	navigation,
 	expoPushToken,
 	userName,
 	onRecord,
-}) {
+}: Props) {
 	const [inputMessage, setInputMessage] = useState("");
 	const [currentUserId] = useState(firebase.auth().currentUser.email);
-	const [sentSound, setSentSound] = useState();
+	const [sentSound, setSentSound] = useState(null);
 	const inputRef = useRef(null);
+
+	const sendNotification = useCallback(async () => {
+		if (!expoPushToken) {
+			console.log("Can't find user's token");
+			return;
+		}
+		let response = await fetch("https://exp.host/--/api/v2/push/send", {
+			method: "POST",
+			headers: {
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				to: expoPushToken,
+				sound: "default",
+				title: userName,
+				body: inputMessage,
+			}),
+		});
+		await response.json().then((resp: object) => {
+			console.log(resp);
+		});
+	}, []);
 
 	const sendMessage = useCallback((message) => {
 		const docId =
@@ -39,23 +70,23 @@ export default function ChatInput({
 				sentSound.playAsync();
 				sendNotification();
 			});
-	});
+	}, []);
 
 	const selectPicture = useCallback(async () => {
+		///@ts-ignore
 		const { cancelled, uri } = await launchImageLibraryAsync({
 			mediaTypes: MediaTypeOptions.Images,
 			quality: 1,
-			allowsMultipleSelection: true,
 		});
 
 		if (!cancelled) {
 			navigation.navigate("Confirm", {
-				imageUrls: [{ uri: uri }],
+				imageUrls: [{ uri }],
 				senderId: otherUserId,
 				pushToken: expoPushToken,
 			});
 		}
-	});
+	}, []);
 
 	const loadSentSound = useCallback(async () => {
 		const { sound } = await Audio.Sound.createAsync(
@@ -63,33 +94,10 @@ export default function ChatInput({
 		);
 
 		setSentSound(sound);
-	});
+	}, []);
 
-	sendNotification = useCallback(async () => {
-		if (!expoPushToken) {
-			console.log("Can't find user's token");
-			return;
-		}
-		let response = await fetch("https://exp.host/--/api/v2/push/send", {
-			method: "POST",
-			headers: {
-				Accept: "application/json",
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				to: expoPushToken,
-				sound: "default",
-				title: userName,
-				body: inputMessage,
-			}),
-		});
-    await response.json().then((resp)=>{
-      console.log(resp)
-    })
-  });
-
-	useEffect(async () => {
-		await loadSentSound();
+	useEffect(() => {
+		loadSentSound();
 		return sentSound
 			? () => {
 					sentSound.unloadAsync();
@@ -113,7 +121,7 @@ export default function ChatInput({
 						justifyContent: "center",
 						alignItems: "center",
 					}}
-					onPress={() => {
+					onPress={(): void => {
 						selectPicture();
 					}}
 				>
@@ -161,8 +169,8 @@ export default function ChatInput({
 					<Icon
 						name="microphone"
 						type="font-awesome"
-						reverse={true}
-						raised={true}
+						reverse
+						raised
 						size={RFValue(35)}
 						color="#80AED7"
 					/>

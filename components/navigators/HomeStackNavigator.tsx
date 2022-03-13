@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const Stack = createNativeStackNavigator();
 
-export default function HomeStackNavigator(props) {
+export default function HomeStackNavigator() {
 	return (
 		<Stack.Navigator
 			initialRouteName="Login"

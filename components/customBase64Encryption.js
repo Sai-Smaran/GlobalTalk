@@ -210,8 +210,8 @@ function strToUTF8Arr(sDOMStr) {
 /**
  * Encrypts given input using Base64
  *
- * @param string A string to encrypt
- * @returns  A base64 encrypted data in the form of a string
+ * @param {string} str A string to encrypt
+ * @returns {string} A base64 encrypted data in the form of a string
  */
 function encrypt(str) {
   var input = strToUTF8Arr(str);
@@ -222,8 +222,8 @@ function encrypt(str) {
 /**
  * Decrypts given input using Base64
  *
- * @param string A string to Decrypt
- * @returns A base64 decrypted data in the form of a string
+ * @param {string} base64 A string to Decrypt
+ * @returns {string} A base64 decrypted data in the form of a string
  */
 
 function decrypt(base64) {

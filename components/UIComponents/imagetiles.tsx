@@ -2,7 +2,19 @@ import React from "react";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
 
-export default function ImageTiles({ navigation, item }) {
+interface Props {
+  navigation: any,
+  item: {
+		sender_email: string,
+		media: string[],
+		media_type: "image" | "audio",
+		message: string,
+		profile_url: string,
+		sender_name: string    
+  }
+}
+
+export default function ImageTiles({ navigation, item }: Props) {
   switch (item.media.length) {
     case 1:
       return (

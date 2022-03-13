@@ -5,12 +5,13 @@ import { decrypt as atob } from "../customBase64Encryption";
 import ChatAudioPlayer from "./chataudioplayer";
 import ImageTiles from "./imagetiles";
 
+//Nope. No types going here
 export default function ChatMessageContainer({
 	item,
 	navigation,
 	currentUserId,
 }) {
-
+	
 	return (
 		<View
 			style={

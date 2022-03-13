@@ -15,7 +15,17 @@ import { RFValue } from "react-native-responsive-fontsize";
 import { Icon } from "react-native-elements";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-export default class ImageView extends Component {
+interface Props {
+	route: any
+	navigation: any
+}
+
+interface State {
+	images: string[],
+	senderName: string
+}
+
+export default class ImageView extends Component<Props, State> {
 	constructor(props) {
 		super(props);
 		this.state = {
@@ -77,6 +87,7 @@ export default class ImageView extends Component {
 		return (
 			<SafeAreaProvider>
 				<ImageViewer
+					//@ts-ignore
 					imageUrls={this.state.images}
 					onRequestClose={() => navigation.goBack()}
 					visible
