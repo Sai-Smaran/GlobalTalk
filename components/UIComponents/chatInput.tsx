@@ -112,6 +112,8 @@ export default function ChatInput({
 				backgroundColor: "#ebebeb",
 				width: "100%",
 				justifyContent: "center",
+				position: "absolute",
+				bottom: 0,
 			}}
 		>
 			<View style={styles.chatInput}>
@@ -137,7 +139,6 @@ export default function ChatInput({
 						fontSize: RFValue(20),
 						backgroundColor: "white",
 						borderRadius: RFValue(50),
-						flex: 1,
 						paddingHorizontal: RFValue(25),
 					}}
 					placeholder="Say something..."

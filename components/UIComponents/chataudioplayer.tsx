@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Audio } from "expo-av";
-import { MaterialIcons as MIcon, FontAwesome5 as FA5Icon } from "@expo/vector-icons";
+import { Icon } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
 
 interface ChatAudioPlayerProps {
 	item: {
-		media: string,
-		profile_url: string
-	}
+		media: string;
+		profile_url: string;
+	};
 }
 
 export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
@@ -18,10 +18,7 @@ export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
 
 	async function handleAudio() {
 		if (!playbackObj) {
-			playbackObj.loadAsync(
-				{ uri: item.media },
-				{ shouldPlay: true }
-			);
+			playbackObj.loadAsync({ uri: item.media }, { shouldPlay: true });
 		}
 		if (soundObj.isLoaded && soundObj.isPlaying) {
 			const status = await playbackObj.setStatusAsync({ shouldPlay: false });
@@ -36,7 +33,6 @@ export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
 			setSoundObj(status);
 		}
 	}
-
 
 	return (
 		<View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -57,7 +53,7 @@ export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
 						borderRadius: 250,
 					}}
 				/>
-				<MIcon
+				<Icon
 					name="mic"
 					iconStyle={{
 						backgroundColor: "whitesmoke",
@@ -71,7 +67,7 @@ export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
 					await handleAudio();
 				}}
 			>
-				<FA5Icon
+				<Icon
 					name={
 						soundObj
 							? soundObj.isPlaying

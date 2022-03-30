@@ -36,7 +36,7 @@ export default class AboutUserScreen extends Component<Props, State> {
 			>
 				<MyStackHeader
 					title={`Profile - ${this.state.userName}`}
-					navigation={this.props.navigation}
+					onBackPress={()=>this.props.navigation.goBack()}
 				/>
 				<View style={styles.nameAvatarContainer}>
 					<Avatar

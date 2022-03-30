@@ -56,7 +56,7 @@ export default class SentImgList extends Component<Props, State> {
 			<View>
 				<MyStackHeader
 					title={this.state.senderName}
-					navigation={this.props.navigation}
+					onBackPress={()=>this.props.navigation.goBack()}
 				/>
 				<FlatList
 					keyExtractor={this.keyExtractor}

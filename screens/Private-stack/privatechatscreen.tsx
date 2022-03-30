@@ -334,7 +334,7 @@ export default class PrivateChat extends Component<Props, State> {
 				>
 					<MyStackHeader
 						title={this.state.otherUserName}
-						navigation={this.props.navigation}
+						onBackPress={()=>this.props.navigation.goBack()}
 					/>
 					<View style={{ height: "80%", backgroundColor: "#ebebeb" }}>
 						{this.state.allMessages.length !== 0 ? (

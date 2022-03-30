@@ -91,7 +91,7 @@ export default class SearchUser extends Component<Props, State> {
       <View style={{ flex: 1, backgroundColor: "#ededed" }}>
         <MyDrawerHeader
           title="Private chat"
-          navigation={this.props.navigation}
+          onDrawerIconPress={()=>this.props.navigation.openDrawer()}
         />
         <SearchBar
           platform="android"

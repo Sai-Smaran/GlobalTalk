@@ -3,16 +3,28 @@ import { Header } from "react-native-elements";
 import { Icon } from "react-native-elements";
 
 interface DrawerHeaderProps {
+	/*
+	 *Title of the header
+	 */
 	title: string;
-	navigation: any;
+	/**
+	 *Callback triggered when pressed the drawer button
+	 */
+	onDrawerIconPress: () => void;
 }
 
 interface StackHeaderProps {
-	navigation: any;
+	/*
+	 *Title of the header
+	 */
 	title: string;
+	/**
+	 *Callback triggered when pressed the back button
+	 */
+	onBackPress: () => void;
 }
 
-function MyDrawerHeader({ navigation, title }: DrawerHeaderProps) {
+function MyDrawerHeader({ title, onDrawerIconPress }: DrawerHeaderProps) {
 	return (
 		<Header
 			placement="left"
@@ -22,7 +34,7 @@ function MyDrawerHeader({ navigation, title }: DrawerHeaderProps) {
 					type="entypo"
 					color="white"
 					size={30}
-					onPress={() => navigation.openDrawer()}
+					onPress={onDrawerIconPress}
 				/>
 			}
 			centerComponent={{
@@ -34,7 +46,7 @@ function MyDrawerHeader({ navigation, title }: DrawerHeaderProps) {
 	);
 }
 
-function MyStackHeader({ navigation, title }: StackHeaderProps) {
+function MyStackHeader({ onBackPress, title }: StackHeaderProps) {
 	return (
 		<Header
 			leftComponent={
@@ -42,7 +54,7 @@ function MyStackHeader({ navigation, title }: StackHeaderProps) {
 					name="arrow-back-ios"
 					type="material"
 					color="white"
-					onPress={() => navigation.goBack()}
+					onPress={onBackPress}
 				/>
 			}
 			centerComponent={{

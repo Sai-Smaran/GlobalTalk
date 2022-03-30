@@ -8,8 +8,6 @@ import {
 	KeyboardAvoidingView,
 	Text,
 	Image,
-	BackHandler,
-	Alert,
 } from "react-native";
 import { Icon, Avatar } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
@@ -142,7 +140,7 @@ export default class PublicChat extends Component<Props, State> {
 			});
 	}
 
-	keyExtractor = (_, index) => index.toString();
+	keyExtractor = (_: any, index: number) => index.toString();
 
 	renderItem = ({ item }) => {
 		return (
@@ -216,7 +214,7 @@ export default class PublicChat extends Component<Props, State> {
 			>
 				<MyDrawerHeader
 					title="Public chat"
-					navigation={this.props.navigation}
+					onDrawerIconPress={()=>this.props.navigation.openDrawer()}
 				/>
 				<View style={{ height: "80%", backgroundColor: "#ebebeb" }}>
 					{this.state.allMessages.length !== 0 ? (
@@ -253,6 +251,8 @@ export default class PublicChat extends Component<Props, State> {
 						flexDirection: "row",
 						backgroundColor: "#ebebeb",
 						justifyContent: "center",
+						position: "absolute",
+						bottom: 0
 					}}
 				>
 					<TextInput
@@ -294,7 +294,6 @@ export default class PublicChat extends Component<Props, State> {
 
 const styles = StyleSheet.create({
 	chatInput: {
-		width: "80%",
 		height: RFValue(75),
 		borderColor: "gray",
 		borderRadius: RFValue(50),
@@ -303,6 +302,7 @@ const styles = StyleSheet.create({
 		elevation: 8,
 		fontSize: RFValue(20),
 		paddingLeft: 10,
+		flex: 1
 	},
 	messagePopupConatiner: {
 		backgroundColor: "#80AED7",
