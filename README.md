@@ -1,6 +1,15 @@
-# GlobalTalk
+<p align="center"><image src="https://github.com/Sai-Smaran/GlobalTalk/raw/master/assets/icon.png" width="200" height="200" /></p>
+<h1 align="center">GlobalTalk</h1>
 
-GlobalTalk is a platform in which you can talk to everyone publicly, or privately!
+<h3 align="center">GlobalTalk is a platform in which you can talk to everyone publicly, or privately!</h4>
+
+<p align="center"><a href="https://expo.dev/client" target="_blank">
+<img src="https://img.shields.io/badge/Runs%20with%20Expo%20Go-000.svg?style=flat-square&logo=EXPO&labelColor=f3f3f3&logoColor=000" aria-label="Runs with Expo Go" />
+</a>
+<a href="https://github.com/prettier/prettier" target="_blank" >
+<img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square" aria-label="code style: prettier" />
+</a>
+</p>
 
 ## TODOs
 
