@@ -1,12 +1,29 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import {
+	Modal,
+	Pressable,
+	StyleSheet,
+	Text,
+	TextInput,
+	ToastAndroid,
+	TouchableOpacity,
+	View,
+	Alert,
+} from "react-native";
 import { Audio } from "expo-av";
-import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
+import {
+	launchImageLibraryAsync,
+	MediaTypeOptions,
+	ExpandImagePickerResult,
+	ImagePickerResult,
+	OpenFileBrowserOptions,
+} from "expo-image-picker";
 import firebase from "firebase";
 import db from "../../config";
 import { encrypt as btoa } from "../customBase64Encryption";
 import { RFValue } from "react-native-responsive-fontsize";
 import { Icon } from "react-native-elements";
+import { useFocusEffect } from "@react-navigation/native";
 
 interface Props {
 	otherUserId: string;
@@ -25,8 +42,9 @@ export default function ChatInput({
 }: Props) {
 	const [inputMessage, setInputMessage] = useState("");
 	const [currentUserId] = useState(firebase.auth().currentUser.email);
-	const [sentSound, setSentSound] = useState(null);
-	const inputRef = useRef(null);
+	const [sentSound, setSentSound] = useState<Audio.Sound>(null);
+	const [isModalVisible, setIsModalVisible] = useState(false);
+	const inputRef = useRef<TextInput>(null);
 
 	const sendNotification = useCallback(async () => {
 		if (!expoPushToken) {
@@ -76,12 +94,41 @@ export default function ChatInput({
 		///@ts-ignore
 		const { cancelled, uri } = await launchImageLibraryAsync({
 			mediaTypes: MediaTypeOptions.Images,
-			quality: 1,
+			allowsEditing: false,
 		});
 
 		if (!cancelled) {
 			navigation.navigate("Confirm", {
 				imageUrls: [{ uri }],
+				senderId: otherUserId,
+				pushToken: expoPushToken,
+			});
+		}
+	}, []);
+	const selectMotionPicture = useCallback(async () => {
+		let returnedDt: any;
+		///@ts-ignore
+		await launchImageLibraryAsync({
+			mediaTypes: MediaTypeOptions.Videos,
+			quality: 1,
+			videoQuality: 0.75,
+			videoMaxDuration: 900000,
+		})
+			.then((dt) => {
+				returnedDt = dt;
+			})
+			.catch((err) => {
+				Alert.alert("Error", "Cannot read file. Maybe the file is corrupted?");
+				console.log(err);
+			});
+
+		if (!returnedDt.cancelled) {
+			if (returnedDt.duration > 900000) {
+				ToastAndroid.show("Video is too long", ToastAndroid.SHORT);
+				return;
+			}
+			navigation.navigate("Confirm-video", {
+				imageUrl: returnedDt.uri,
 				senderId: otherUserId,
 				pushToken: expoPushToken,
 			});
@@ -96,14 +143,111 @@ export default function ChatInput({
 		setSentSound(sound);
 	}, []);
 
-	useEffect(() => {
-		loadSentSound();
-		return sentSound
-			? () => {
-					sentSound.unloadAsync();
-			  }
-			: undefined;
-	}, []);
+	useFocusEffect(
+		React.useMemo(() => {
+			loadSentSound();
+			return sentSound
+				? () => {
+						sentSound.unloadAsync();
+				  }
+				: () => {};
+		}, [])
+	);
+
+	const SelectMediaTypeModal = () => (
+		<Modal
+			transparent
+			animationType="fade"
+			visible={isModalVisible}
+			onRequestClose={() => setIsModalVisible(false)}
+		>
+			<View
+				style={{
+					flex: 1,
+					backgroundColor: "rgba(0,0,0, 0.6)",
+					justifyContent: "center",
+					alignItems: "center",
+				}}
+			>
+				<View
+					style={{
+						backgroundColor: "white",
+						width: "75%",
+						height: 360,
+						borderRadius: 20,
+					}}
+				>
+					<View
+						style={{
+							height: "35%",
+							width: "100%",
+							justifyContent: "center",
+						}}
+					>
+						<Text
+							style={{
+								padding: 25,
+								fontSize: RFValue(25),
+								color: "rgb(20,20,20)",
+							}}
+						>
+							Select media type to upload
+						</Text>
+					</View>
+					<Pressable
+						style={{
+							width: "100%",
+							height: "27.5%",
+							alignItems: "center",
+							flexDirection: "row",
+						}}
+						onPress={async () => {
+							await selectPicture();
+							setIsModalVisible(false);
+						}}
+					>
+						<View
+							style={{
+								flexDirection: "row",
+								alignItems: "center",
+								padding: 10,
+							}}
+						>
+							<Icon name="photo" size={50} color="green" />
+							<Text style={{ fontSize: 25, paddingHorizontal: 20 }}>
+								Images
+							</Text>
+						</View>
+					</Pressable>
+					<Pressable
+						style={{
+							width: "100%",
+							height: "27.5%",
+							alignItems: "center",
+							flexDirection: "row",
+						}}
+						onPress={async () => {
+							setIsModalVisible(false);
+							await selectMotionPicture();
+						}}
+					>
+						<View
+							style={{
+								flexDirection: "row",
+								alignItems: "center",
+								padding: 10,
+							}}
+						>
+							<Icon name="video" type="entypo" size={50} color="green" />
+							<Text style={{ fontSize: 25, paddingHorizontal: 20 }}>
+								Videos
+							</Text>
+						</View>
+					</Pressable>
+				</View>
+			</View>
+		</Modal>
+	);
 
 	return (
 		<View
@@ -116,6 +260,7 @@ export default function ChatInput({
 				bottom: 0,
 			}}
 		>
+			<SelectMediaTypeModal />
 			<View style={styles.chatInput}>
 				<TouchableOpacity
 					style={{
@@ -123,8 +268,9 @@ export default function ChatInput({
 						justifyContent: "center",
 						alignItems: "center",
 					}}
-					onPress={(): void => {
-						selectPicture();
+					onPress={() => {
+						// selectPicture();
+						setIsModalVisible(true);
 					}}
 				>
 					<Icon

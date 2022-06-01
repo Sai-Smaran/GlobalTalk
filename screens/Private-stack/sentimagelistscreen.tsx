@@ -23,7 +23,7 @@ export default class SentImgList extends Component<Props, State> {
 		};
 	}
 
-	keyExtractor = (item, index) => index.toString();
+	keyExtractor = (_: any, index: number) => index.toString();
 
 	renderItem = ({ item, index }) => (
 		<TouchableOpacity

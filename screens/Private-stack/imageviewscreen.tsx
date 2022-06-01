@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import {
 	View,
-	Image,
 	TouchableOpacity,
 	Text,
 	ActivityIndicator,
@@ -26,7 +25,7 @@ interface State {
 }
 
 export default class ImageView extends Component<Props, State> {
-	constructor(props) {
+	constructor(props: Props | Readonly<Props>) {
 		super(props);
 		this.state = {
 			images: this.props.route.params.images,
@@ -101,11 +100,6 @@ export default class ImageView extends Component<Props, State> {
 					flipThreshold={RFValue(60)}
 					doubleClickInterval={300}
 					renderHeader={() => this.renderHeader()}
-					renderImage={(props) => (
-						// <SharedElement id={{ ...props.index }}>
-							<Image {...props} />
-						// </SharedElement>
-					)}
 					renderIndicator={() => null}
 				/>
 			</SafeAreaProvider>

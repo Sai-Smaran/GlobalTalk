@@ -7,6 +7,7 @@ import ConfirmSendImage from "../../screens/Private-stack/confirmsendimagescreen
 import EditImageScreen from "../../screens/Private-stack/editimagescreen";
 import SentImgList from "../../screens/Private-stack/sentimagelistscreen";
 import ImageView from "../../screens/Private-stack/imageviewscreen";
+import ConfirmSendVideoScreen from "../../screens/Private-stack/confirmsendvideoscreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +24,7 @@ export default function PrivateChatStackNavigator() {
       <Stack.Screen component={EditImageScreen} name="Edit" />
       <Stack.Screen component={SentImgList} name="List" />
       <Stack.Screen component={ImageView} name="View" />
+      <Stack.Screen component={ConfirmSendVideoScreen} name="Confirm-video" />
     </Stack.Navigator>
   );
 }

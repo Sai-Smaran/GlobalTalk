@@ -18,5 +18,5 @@
 - [ ] Add ability to send and view videos and any other arbitrary file type.
 - [ ] Add authentication using google and facebook.
 - [ ] Make the app decentralised using `gun.js`
-- [ ] A UI revamp (like animations, better UI and stuff).
+- [ ] An UI revamp (like animations, better UI and stuff).
 - [ ] Add 2 factor authentication (2FA).

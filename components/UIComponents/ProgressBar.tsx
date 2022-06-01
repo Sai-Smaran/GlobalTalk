@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React from "react";
 import { StyleProp, StyleSheet, ViewStyle } from "react-native";
 import Animated, {
   Easing,
@@ -33,9 +34,12 @@ export default function ProgressBar({
     }
   );
 
-  useEffect(() => {
-    height.value = withTiming(50, { duration: 150 });
-  }, []);
+  useFocusEffect(
+		React.useMemo(() => {
+      height.value = withTiming(50, { duration: 150 });
+      return () => {}
+		}, [])
+	);
 
   const overallHeight = useAnimatedStyle(() => {
     return {

@@ -19,9 +19,9 @@ export default function SignUpScreen({ navigation }: { navigation: any }): JSX.E
 	const [password, setPassword] = useState("");
 	const [password2, setPassword2] = useState("");
 	const [loading, setLoading] = useState(false);
-	const emailRef = useRef(null);
-	const passRef = useRef(null);
-	const passverRef = useRef(null);
+	const emailRef = useRef<TextInput>(null);
+	const passRef = useRef<TextInput>(null);
+	const passverRef = useRef<TextInput>(null);
 
 	const generateKeywords = (userName: string) => {
 		const wordArr = userName.toLowerCase().split(" ");
@@ -71,7 +71,7 @@ export default function SignUpScreen({ navigation }: { navigation: any }): JSX.E
 
 	return (
 		<View>
-			<MyStackHeader title="Sign up" navigation={navigation} />
+			<MyStackHeader title="Sign up" onBackPress={()=>navigation.goBack()} />
 			<View style={{ alignItems: "center" }}>
 				<TextInput
 					placeholder="Username"

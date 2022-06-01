@@ -11,12 +11,12 @@
     "@expo/vector-icons": "^12.0.0",
     "@react-native-async-storage/async-storage": "~1.15.0",
     "@react-native-community/masked-view": "0.1.10",
+    "@react-native-community/slider": "4.1.12",
     "@react-navigation/drawer": "^6.1.8",
     "@react-navigation/native": "^6.0.6",
     "@react-navigation/native-stack": "^6.5.2",
     "@react-navigation/stack": "^6.0.11",
     "expo": "^44.0.6",
-    "expo-av": "~10.2.0",
     "expo-device": "~4.1.0",
     "expo-file-system": "~13.1.4",
     "expo-font": "~10.0.4",
@@ -29,11 +29,11 @@
     "firebase": "^8.2.3",
     "react": "17.0.1",
     "react-dom": "17.0.1",
-    "react-native": "0.64.3",
+    "react-native": "^0.64.3",
     "react-native-elements": "^4.0.0-beta.0",
     "react-native-gesture-handler": "~2.1.0",
     "react-native-get-random-values": "~1.7.0",
-    "react-native-image-viewing": "^0.2.1",
+    "react-native-image-viewing": "^0.2.2",
     "react-native-image-zoom-viewer": "^3.0.1",
     "react-native-reanimated": "~2.3.1",
     "react-native-redash": "^16.2.3",
@@ -44,7 +44,8 @@
     "react-native-web": "0.17.1",
     "react-navigation": "^4.4.4",
     "recoil": "^0.5.2",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "expo-av": "~10.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
@@ -52,7 +53,7 @@
     "@types/react": "^17.0.1",
     "@types/react-native": "^0.64.3",
     "@types/uuid": "^8.3.2",
-    "typescript": "~4.3.5"
+    "typescript": "^4.6.3"
   },
   "private": true
 }

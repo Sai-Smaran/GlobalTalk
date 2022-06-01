@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
 	View,
 	Text,
@@ -15,13 +15,17 @@ import {
 	DrawerItemList,
 } from "@react-navigation/drawer";
 import { DeviceType, getDeviceTypeAsync } from "expo-device";
-import { DrawerDescriptorMap, DrawerNavigationHelpers } from "@react-navigation/drawer/lib/typescript/src/types";
+import {
+	DrawerDescriptorMap,
+	DrawerNavigationHelpers,
+} from "@react-navigation/drawer/lib/typescript/src/types";
+import { useFocusEffect } from "@react-navigation/native";
 
 interface Props {
-	children?: React.ReactNode,
-	state: any,
-	descriptors: DrawerDescriptorMap,
-	navigation: DrawerNavigationHelpers
+	children?: React.ReactNode;
+	state: any;
+	descriptors: DrawerDescriptorMap;
+	navigation: DrawerNavigationHelpers;
 }
 
 const deviceTypeMap = {
@@ -32,7 +36,7 @@ const deviceTypeMap = {
 	[DeviceType.TV]: "tv",
 };
 
-export default function CustomSideBarMenu(props : Props) {
+export default function CustomSideBarMenu(props: Props) {
 	const [userId] = useState(firebase.auth().currentUser.email);
 	const [image, setimage] = useState("#");
 	const [userName, setUserName] = useState(""),
@@ -59,7 +63,8 @@ export default function CustomSideBarMenu(props : Props) {
 	function getUserProfile() {
 		db.collection("users")
 			.where("email", "==", userId)
-			.onSnapshot((querySnapshot) => {
+			.get()
+			.then((querySnapshot) => {
 				querySnapshot.forEach((doc) => {
 					const data = doc.data();
 					setUserName(data.user_name);
@@ -68,13 +73,16 @@ export default function CustomSideBarMenu(props : Props) {
 			});
 	}
 
-	useEffect(() => {
-		fetchImage(userId);
-		getUserProfile();
-		getDeviceTypeAsync().then((dev) => {
-			setCurrentDeviceType(deviceTypeMap[dev]);
-		});
-	}, []);
+	useFocusEffect(
+		React.useMemo(() => {
+			fetchImage(userId);
+			getUserProfile();
+			getDeviceTypeAsync().then((dev) => {
+				setCurrentDeviceType(deviceTypeMap[dev]);
+			});
+			return () => {};
+		}, [])
+	);
 
 	const { width } = useWindowDimensions();
 	return (
@@ -126,7 +134,7 @@ export default function CustomSideBarMenu(props : Props) {
 				</Text>
 			</View>
 			<DrawerContentScrollView {...props} style={{ flex: 0.6 }}>
-				<DrawerItemList navigation={undefined} {...props} />
+				<DrawerItemList {...props} />
 			</DrawerContentScrollView>
 			<View
 				style={{

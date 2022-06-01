@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
 	View,
 	Text,
@@ -13,31 +13,15 @@ import {
 import { RFValue } from "react-native-responsive-fontsize";
 import { Divider, Header, Icon } from "react-native-elements";
 import firebase from "firebase";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function LoginScreen({ navigation }: { navigation: any }) {
 	const [emailId, setEmailId] = useState("");
 	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [passNotVisible, setPassNotVisible] = useState(true);
-	const inputRef = useRef(null);
+	const inputRef = useRef<TextInput>(null);
 	const { width } = useWindowDimensions();
-
-	const generateKeywords = (userName) => {
-		const wordArr = userName.toLowerCase().split(" ");
-		const searchableKeywords = [];
-		let prevKey = "";
-		for (const word of wordArr) {
-			const charArr = word.toLowerCase().split("");
-			for (const char of charArr) {
-				const keyword = prevKey + char;
-				searchableKeywords.push(keyword);
-				prevKey = keyword;
-			}
-			prevKey = "";
-		}
-
-		return searchableKeywords;
-	};
 
 	const loginWithZucc = () => {
 		//TODO: Add login with facebook
@@ -59,7 +43,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 		);
 	};
 
-	const emailLogin = (email, pass) => {
+	const emailLogin = (email: string, pass: string) => {
 		firebase
 			.auth()
 			.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
@@ -82,9 +66,12 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 			});
 	};
 
-	useEffect(() => {
-		setLoading(false);
-	}, []);
+	useFocusEffect(
+		useMemo(() => {
+			setLoading(false);
+			return () => {};
+		}, [])
+	);
 
 	return (
 		<View style={{ flex: 1, backgroundColor: "#ebebeb" }}>

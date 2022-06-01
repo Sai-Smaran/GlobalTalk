@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Icon } from "react-native-elements";
 import { useWindowDimensions, StyleSheet } from "react-native";
 import { DeviceType, getDeviceTypeAsync } from "expo-device";
@@ -24,11 +24,14 @@ export default function AppDrawerNavigator() {
 		[DeviceType.TV]: "tv",
 	};
 
-	React.useEffect(() => {
-		getDeviceTypeAsync().then((dev) => {
-			setcurrentDeviceType(deviceTypeMap[dev]);
-		});
-	}, []);
+	useEffect(
+		React.useMemo(() => {
+			getDeviceTypeAsync().then((dev) => {
+				setcurrentDeviceType(deviceTypeMap[dev]);
+			});
+			return () => {};
+		}, [])
+	);
 
 	return (
 		<Drawer.Navigator
@@ -37,8 +40,7 @@ export default function AppDrawerNavigator() {
 			screenOptions={{
 				headerShown: false,
 				drawerType:
-					currentDeviceType === "tablet" ||
-					currentDeviceType === "desktop"
+					currentDeviceType === "tablet" || currentDeviceType === "desktop"
 						? width >= 1024
 							? "permanent"
 							: "slide"

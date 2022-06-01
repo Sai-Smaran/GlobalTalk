@@ -8,15 +8,16 @@ import {
 	Image,
 	Alert,
 	Dimensions,
+	Modal,
 } from "react-native";
 import "react-native-get-random-values";
 import { v4 as uuid } from "uuid";
 import { RFValue } from "react-native-responsive-fontsize";
-import db from "../../config";
 import firebase from "firebase";
-import { MyStackHeader } from "../../components/UIComponents/MyHeaders";
 import { Audio } from "expo-av";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import db from "../../config";
+import { MyStackHeader } from "../../components/UIComponents/MyHeaders";
 import ChatInput from "../../components/UIComponents/chatInput";
 import RecordingModal from "../../components/UIComponents/recordingmodal";
 import ChatMessageContainer from "../../components/UIComponents/chatMessageContainer";
@@ -41,7 +42,7 @@ interface State {
 	width: number;
 	progress: number;
 	pfp: "#" | string;
-	modalState: "recording"|"sending"|"fail"
+	modalState: "recording" | "sending" | "fail";
 }
 
 interface Message {
@@ -69,9 +70,7 @@ interface AudioMsg {
 }
 
 export default class PrivateChat extends Component<Props, State> {
-	
 	record: Audio.Recording;
-	unsubscribe: any;
 	recievedSound: Audio.Sound;
 	listRef: FlatList<any>;
 	dimensionsListener: any;
@@ -96,10 +95,9 @@ export default class PrivateChat extends Component<Props, State> {
 			modalState: "recording",
 		};
 		this.record = undefined;
-		this.unsubscribe = null;
 		this.recievedSound;
 		this.listRef = null;
-		this.dimensionsListener
+		this.dimensionsListener;
 	}
 
 	details = this.props.route.params.details;
@@ -237,8 +235,7 @@ export default class PrivateChat extends Component<Props, State> {
 			this.state.otherUserId > this.state.currentUserId
 				? this.state.currentUserId + "-" + this.state.otherUserId
 				: this.state.otherUserId + "-" + this.state.currentUserId;
-		this.unsubscribe = db
-			.collection("chat_sessions")
+		db.collection("chat_sessions")
 			.doc(docId)
 			.collection("messages")
 			.orderBy("created_at")
@@ -280,9 +277,9 @@ export default class PrivateChat extends Component<Props, State> {
 			});
 	}
 
-	keyExtractor = (item, index) => index.toString();
+	keyExtractor = (_: any, index: number) => index.toString();
 
-	renderItem = ({ item, index }) => {
+	renderItem = ({ item }) => {
 		const { navigation } = this.props;
 		return (
 			<ChatMessageContainer
@@ -311,8 +308,7 @@ export default class PrivateChat extends Component<Props, State> {
 		if (this.recievedSound) {
 			await this.recievedSound.unloadAsync();
 		}
-		this.dimensionsListener.remove()
-		this.unsubscribe();
+		this.dimensionsListener.remove();
 	}
 
 	render() {
@@ -334,7 +330,7 @@ export default class PrivateChat extends Component<Props, State> {
 				>
 					<MyStackHeader
 						title={this.state.otherUserName}
-						onBackPress={()=>this.props.navigation.goBack()}
+						onBackPress={() => this.props.navigation.goBack()}
 					/>
 					<View style={{ height: "80%", backgroundColor: "#ebebeb" }}>
 						{this.state.allMessages.length !== 0 ? (

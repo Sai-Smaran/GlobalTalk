@@ -233,7 +233,7 @@ export default class UserInfoEditingScreen extends Component<Props, State> {
 				{this.editModal()}
 				<MyDrawerHeader
 					title="Edit your profile"
-					navigation={this.props.navigation}
+					onDrawerIconPress={()=>this.props.navigation.openDrawer()}
 				/>
 				<Avatar
 					rounded

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { Audio } from "expo-av";
+import { Audio, AVPlaybackStatus } from "expo-av";
 import { Icon } from "react-native-elements";
 import { RFValue } from "react-native-responsive-fontsize";
 
@@ -17,11 +17,13 @@ export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
 	const [currentAudio, setCurrentAudio] = useState("#");
 
 	async function handleAudio() {
-		if (!playbackObj) {
+		if (!soundObj) {
 			playbackObj.loadAsync({ uri: item.media }, { shouldPlay: true });
+			setCurrentAudio(item.media);
+			console.log(soundObj);
 		}
-		if (soundObj.isLoaded && soundObj.isPlaying) {
-			const status = await playbackObj.setStatusAsync({ shouldPlay: false });
+		if (soundObj!.isPlaying!) {
+			const status = await playbackObj.pauseAsync();
 			setSoundObj(status);
 		}
 		if (
@@ -29,8 +31,11 @@ export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
 			!soundObj.isPlaying &&
 			currentAudio === item.media
 		) {
-			const status = await playbackObj.setStatusAsync({ shouldPlay: true });
+			const status = await playbackObj.playAsync();
 			setSoundObj(status);
+		}
+		if (soundObj.didJustFinish) {
+			playbackObj.unloadAsync();
 		}
 	}
 
