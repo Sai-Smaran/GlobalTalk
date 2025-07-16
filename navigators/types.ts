@@ -73,10 +73,15 @@ export type PrivateChatStackParamList = {
 }
 
 export type RootStackScreenProps<T extends keyof RootStackParamList> =
-	NativeStackScreenProps<RootStackParamList, T>;
+	NativeStackScreenProps<
+		RootStackParamList, T
+	>;
 
 export type LoginStackScreenProps<T extends keyof HomeStackParamList> =
-	CompositeScreenProps<NativeStackScreenProps<HomeStackParamList, T>, NativeStackScreenProps<RootStackParamList>>
+	CompositeScreenProps<
+		NativeStackScreenProps<HomeStackParamList, T>,
+		NativeStackScreenProps<RootStackParamList>
+	>
 
 export type DrawerStackScreenProps<T extends keyof DrawerNavigationParamList> = CompositeScreenProps<
 	DrawerScreenProps<DrawerNavigationParamList, T>,
@@ -84,16 +89,22 @@ export type DrawerStackScreenProps<T extends keyof DrawerNavigationParamList> = 
 >
 
 export type PublicChatStackScreenProps<T extends keyof PublicChatStackParamList> =
-	CompositeScreenProps<NativeStackScreenProps<PublicChatStackParamList, T>, CompositeScreenProps<
-		DrawerScreenProps<DrawerNavigationParamList>,
-		NativeStackScreenProps<RootStackParamList>
-	>>
+	CompositeScreenProps<
+		NativeStackScreenProps<PublicChatStackParamList, T>,
+		CompositeScreenProps<
+			DrawerScreenProps<DrawerNavigationParamList>,
+			NativeStackScreenProps<RootStackParamList>
+		>
+	>
 
 export type PrivateChatStackScreenProps<T extends keyof PrivateChatStackParamList> =
-	CompositeScreenProps<NativeStackScreenProps<PrivateChatStackParamList, T>, CompositeScreenProps<
-		DrawerScreenProps<DrawerNavigationParamList>,
-		NativeStackScreenProps<RootStackParamList>
-	>>
+	CompositeScreenProps<
+		NativeStackScreenProps<PrivateChatStackParamList, T>,
+		CompositeScreenProps<
+			DrawerScreenProps<DrawerNavigationParamList>,
+			NativeStackScreenProps<RootStackParamList>
+		>
+	>
 
 declare global {
 	namespace ReactNavigation {
