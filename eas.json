@@ -1,17 +1,19 @@
 {
-	"cli": {
-		"requireCommit": true
-	},
-	"build": {
-		"production": {
-			"distribution": "store",
-			"releaseChannel": "default",
-			"android": {
-				"buildType": "apk"
-			}
-		},
-		"preview": {
-			"distribution": "internal"
-		}
-	}
+  "cli": {
+    "requireCommit": true
+  },
+  "build": {
+    "production": {
+      "distribution": "store",
+      "releaseChannel": "default",
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "production"
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview"
+    }
+  }
 }

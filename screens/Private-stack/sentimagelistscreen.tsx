@@ -1,8 +1,11 @@
-import React, { Component } from "react";
 import { TouchableOpacity, View, FlatList, Image } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
+import { useNavigation, useRoute } from "@react-navigation/native";
 // import { SharedElement } from "react-navigation-shared-element";
+
 import { MyStackHeader } from "../../components/UIComponents/MyHeaders";
+
+import type { PrivateChatStackScreenProps } from "../../navigators/types";
 
 interface Props {
 	route: any;
@@ -14,30 +17,22 @@ interface State {
 	senderName: string
 }
 
-export default class SentImgList extends Component<Props, State> {
-	constructor(props: Props) {
-		super(props);
-		this.state = {
-			images: this.props.route.params.images,
-			senderName: this.props.route.params.senderName,
-		};
-	}
+export function SentImgList() {
+	const navigation = useNavigation<PrivateChatStackScreenProps<'List'>['navigation']>();
+	const route = useRoute<PrivateChatStackScreenProps<'List'>['route']>();
 
-	keyExtractor = (_: any, index: number) => index.toString();
+	const images = route.params.images;
+	const senderName = route.params.senderName;
 
-	renderItem = ({ item, index }) => (
+	const keyExtractor = (_: any, index: number) => index.toString();
+
+	const renderItem = ({ item, index }: { item: any, index: number }) => (
 		<TouchableOpacity
 			style={{ paddingVertical: 5 }}
 			onPress={() => {
-				let imgUrls = this.state.images;
-				let imageUris = [];
-				imgUrls.forEach((element) => {
-					imageUris.push({ url: element });
-				});
-				this.props.navigation.navigate("View", {
-					images: imageUris,
-					senderName: this.state.senderName,
-					imgIndex: index,
+				navigation.navigate("View", {
+					image: images[index],
+					senderName: senderName,
 				});
 			}}
 		>
@@ -51,19 +46,19 @@ export default class SentImgList extends Component<Props, State> {
 		</TouchableOpacity>
 	);
 
-	render() {
-		return (
-			<View>
-				<MyStackHeader
-					title={this.state.senderName}
-					onBackPress={()=>this.props.navigation.goBack()}
+	return (
+		<View>
+			<FlatList
+				ListHeaderComponent={<MyStackHeader
+					title={senderName}
+					onBackPress={() => navigation.goBack()}
 				/>
-				<FlatList
-					keyExtractor={this.keyExtractor}
-					data={this.state.images}
-					renderItem={this.renderItem}
-				/>
-			</View>
-		);
-	}
+				}
+				keyExtractor={keyExtractor}
+				data={images}
+				renderItem={renderItem}
+				stickyHeaderIndices={[0]}
+			/>
+		</View>
+	);
 }

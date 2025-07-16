@@ -1,9 +1,8 @@
+import { useMemo } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import React from "react";
 import { StyleProp, StyleSheet, ViewStyle } from "react-native";
 import Animated, {
   Easing,
-  Extrapolate,
   interpolate,
   useAnimatedReaction,
   useAnimatedStyle,
@@ -35,11 +34,11 @@ export default function ProgressBar({
   );
 
   useFocusEffect(
-		React.useMemo(() => {
+    useMemo(() => {
       height.value = withTiming(50, { duration: 150 });
-      return () => {}
-		}, [])
-	);
+      return () => { }
+    }, [])
+  );
 
   const overallHeight = useAnimatedStyle(() => {
     return {
@@ -52,7 +51,7 @@ export default function ProgressBar({
       progress.value,
       [0, 1],
       [0, styles.containerStyle.width],
-      Extrapolate.CLAMP
+      "clamp"
     );
     return {
       width: fillWidth,

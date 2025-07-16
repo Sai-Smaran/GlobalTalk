@@ -1,4 +1,3 @@
-// import React from "react";
 // import PrivateChat from "../../screens/privatechatscreen";
 // import SentImgList from "../../screens/sentimagelistscreen";
 // import ImageView from "../../screens/imageviewscreen";

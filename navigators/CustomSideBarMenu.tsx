@@ -1,32 +1,24 @@
-import React, { useState } from "react";
+import { useCallback, useState } from "react";
 import {
 	View,
 	Text,
 	TouchableOpacity,
 	useWindowDimensions,
 } from "react-native";
-import { Avatar } from "react-native-elements";
-import firebase from "firebase";
-import db from "../../config";
-import { Icon } from "react-native-elements";
-import { RFValue } from "react-native-responsive-fontsize";
+import { useFocusEffect } from "@react-navigation/native";
+import { Avatar } from "@rneui/base";
+import { signOut } from "firebase/auth";
+import { ref, getDownloadURL } from "firebase/storage";
+import { collection, where, query, getDocs } from "firebase/firestore";
+import { Icon } from "@rneui/base";
 import {
+	DrawerContentComponentProps,
 	DrawerContentScrollView,
 	DrawerItemList,
 } from "@react-navigation/drawer";
 import { DeviceType, getDeviceTypeAsync } from "expo-device";
-import {
-	DrawerDescriptorMap,
-	DrawerNavigationHelpers,
-} from "@react-navigation/drawer/lib/typescript/src/types";
-import { useFocusEffect } from "@react-navigation/native";
-
-interface Props {
-	children?: React.ReactNode;
-	state: any;
-	descriptors: DrawerDescriptorMap;
-	navigation: DrawerNavigationHelpers;
-}
+import { RFValue } from "react-native-responsive-fontsize";
+import { auth, store, fstore } from "../config";
 
 const deviceTypeMap = {
 	[DeviceType.UNKNOWN]: "unknown",
@@ -36,21 +28,17 @@ const deviceTypeMap = {
 	[DeviceType.TV]: "tv",
 };
 
-export default function CustomSideBarMenu(props: Props) {
-	const [userId] = useState(firebase.auth().currentUser.email);
+export function CustomSideBarMenu(props: DrawerContentComponentProps) {
 	const [image, setimage] = useState("#");
-	const [userName, setUserName] = useState(""),
-		[docId, setDocId] = useState(""),
-		[currentDeviceType, setCurrentDeviceType] = useState("");
+	const [userName, setUserName] = useState("");
+	const [currentDeviceType, setCurrentDeviceType] = useState("");
+
+	const userId = auth.currentUser !== null && auth.currentUser.email !== null ? auth.currentUser.email : "";
 
 	function fetchImage(imageName: string) {
-		const storageRef = firebase
-			.storage()
-			.ref()
-			.child("user_profiles/" + imageName);
+		const storageRef = ref(store, "user_profiles/" + imageName);
 
-		storageRef
-			.getDownloadURL()
+		getDownloadURL(storageRef)
 			.then((url: string) => {
 				setimage(url);
 			})
@@ -60,27 +48,23 @@ export default function CustomSideBarMenu(props: Props) {
 			});
 	}
 
-	function getUserProfile() {
-		db.collection("users")
-			.where("email", "==", userId)
-			.get()
-			.then((querySnapshot) => {
-				querySnapshot.forEach((doc) => {
-					const data = doc.data();
-					setUserName(data.user_name);
-					setDocId(doc.id);
-				});
+	async function getUserProfile() {
+		const q = query(collection(fstore, "users"), where("email", "==", userId));
+		await getDocs(q).then((querySnapshot) => {
+			querySnapshot.forEach((doc) => {
+				const data = doc.data();
+				setUserName(data.user_name);
 			});
+		});
 	}
 
 	useFocusEffect(
-		React.useMemo(() => {
+		useCallback(() => {
 			fetchImage(userId);
 			getUserProfile();
 			getDeviceTypeAsync().then((dev) => {
 				setCurrentDeviceType(deviceTypeMap[dev]);
 			});
-			return () => {};
 		}, [])
 	);
 
@@ -100,8 +84,8 @@ export default function CustomSideBarMenu(props: Props) {
 									? "row"
 									: "column"
 								: width >= 480
-								? "row"
-								: "column",
+									? "row"
+									: "column",
 					},
 				]}
 			>
@@ -110,16 +94,18 @@ export default function CustomSideBarMenu(props: Props) {
 					source={{
 						uri: image,
 					}}
+					titleStyle={{ color: "black" }}
+
 					size={
 						currentDeviceType === "tablet" || currentDeviceType === "desktop"
 							? width >= 1024
 								? "large"
 								: "xlarge"
 							: width >= 480
-							? "small"
-							: "large"
+								? "small"
+								: "large"
 					}
-					title={userName.charAt(0).toUpperCase()}
+					title={image === "#" && userName.charAt(0).toUpperCase()}
 				/>
 
 				<Text
@@ -154,7 +140,7 @@ export default function CustomSideBarMenu(props: Props) {
 						alignItems: "center",
 					}}
 					onPress={() => {
-						firebase.auth().signOut();
+						signOut(auth);
 					}}
 				>
 					<Icon

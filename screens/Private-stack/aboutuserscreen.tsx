@@ -1,63 +1,51 @@
-import React, { Component } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Avatar } from "react-native-elements";
+import { Avatar } from "@rneui/base";
 import { RFValue } from "react-native-responsive-fontsize";
 import { MyStackHeader } from "../../components/UIComponents/MyHeaders";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { PrivateChatStackScreenProps } from "../../navigators/types";
 
-interface Props {
-	route: any
-	navigation: any
-}
+export function AboutUserScreen() {
+	const navigation = useNavigation<PrivateChatStackScreenProps<'About'>['navigation']>();
+	const route = useRoute<PrivateChatStackScreenProps<'About'>['route']>();
 
-interface State {
-	userName: string
-	imageLink: string
-	about: string
-}
+	const userName: string = route.params.details.user_name
+	const imageLink: string = route.params.details.profile_url
+	const about: string = route.params.details.about
 
-export default class AboutUserScreen extends Component<Props, State> {
-	constructor(props) {
-		super(props);
-		this.state = {
-			userName: this.props.route.params.details.user_name,
-			imageLink: this.props.route.params.details.profile_url,
-			about: this.props.route.params.details.about,
-		};
-	}
+	return (
+		<View
+			style={{
+				backgroundColor: "#ededed",
+				height: "100%",
+				alignItems: "center",
+			}}
+		>
+			<MyStackHeader
+				title={`Profile - ${userName}`}
+				onBackPress={() => navigation.goBack()}
+			/>
+			<View style={styles.nameAvatarContainer}>
+				<Avatar
+					rounded
+					source={
+						imageLink
+							? { uri: imageLink }
+							: { uri: "#" }
+					}
+					titleStyle={{ color: "black" }}
 
-	render() {
-		return (
-			<View
-				style={{
-					backgroundColor: "#ededed",
-					height: "100%",
-					alignItems: "center",
-				}}
-			>
-				<MyStackHeader
-					title={`Profile - ${this.state.userName}`}
-					onBackPress={()=>this.props.navigation.goBack()}
+					title={userName.charAt(0).toUpperCase()}
+					size={RFValue(100)}
 				/>
-				<View style={styles.nameAvatarContainer}>
-					<Avatar
-						rounded
-						source={
-							this.state.imageLink
-								? { uri: this.state.imageLink }
-								: { uri: "#" }
-						}
-						title={this.state.userName.charAt(0).toUpperCase()}
-						size={RFValue(100)}
-					/>
-					<Text style={styles.userName}>{this.state.userName}</Text>
-				</View>
-				<View style={{ width: "90%", marginTop: 20 }}>
-					<Text style={{ fontWeight: "bold", fontSize: 20 }}>About</Text>
-					<Text style={styles.aboutBox}>{this.state.about}</Text>
-				</View>
+				<Text style={styles.userName}>{userName}</Text>
 			</View>
-		);
-	}
+			<View style={{ width: "90%", marginTop: 20 }}>
+				<Text style={{ fontWeight: "bold", fontSize: 20 }}>About</Text>
+				<Text style={styles.aboutBox}>{about}</Text>
+			</View>
+		</View>
+	);
 }
 
 const styles = StyleSheet.create({

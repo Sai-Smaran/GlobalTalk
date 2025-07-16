@@ -1,4 +1,4 @@
-import React from "react";
+import { forwardRef } from "react";
 import { View, Text, StyleSheet, StyleProp, TextStyle } from "react-native";
 import Animated, {
 	Easing,
@@ -26,7 +26,7 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 interface Props {
 	secondaryBackgroundStroke?: string,
 	progress: number,
-	mainBackgroundStroke?: string | undefined,
+	mainBackgroundStroke?: string,
 	percentageTextStyle?: StyleProp<TextStyle>,
 	counterTextStyle?: StyleProp<TextStyle>,
 	secondaryStroke?: string,

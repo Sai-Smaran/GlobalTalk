@@ -1,41 +1,52 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { Audio, AVPlaybackStatus } from "expo-av";
-import { Icon } from "react-native-elements";
+import { useEffect } from "react";
+import {
+	View,
+	StyleSheet,
+	Image,
+	TouchableOpacity,
+	ActivityIndicator,
+} from "react-native";
+import {
+	useAudioPlayer,
+	useAudioPlayerStatus,
+	useAudioSampleListener,
+} from "expo-audio";
 import { RFValue } from "react-native-responsive-fontsize";
+import { Avatar, Icon } from "@rneui/base";
 
-interface ChatAudioPlayerProps {
+type ChatAudioPlayerProps = {
 	item: {
 		media: string;
 		profile_url: string;
 	};
-}
+};
 
 export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
-	const [playbackObj] = useState(new Audio.Sound());
-	const [soundObj, setSoundObj] = useState(null);
-	const [currentAudio, setCurrentAudio] = useState("#");
+	const audioPlayer = useAudioPlayer({ uri: item.media }, 100);
+	const audioStatus = useAudioPlayerStatus(audioPlayer);
+	useAudioSampleListener(audioPlayer, (samp) => {
+		if (audioPlayer.isAudioSamplingSupported) {
+			console.log(`[${samp.timestamp}] -> ${samp.channels}`);
+		}
+	});
 
-	async function handleAudio() {
-		if (!soundObj) {
-			playbackObj.loadAsync({ uri: item.media }, { shouldPlay: true });
-			setCurrentAudio(item.media);
-			console.log(soundObj);
+	function playAudio() {
+		try {
+			// Reached the end of the audio clip, now play the audio from the beginning
+			if (audioPlayer.currentTime === audioStatus.duration) {
+				audioPlayer.seekTo(0);
+			}
+			audioPlayer.play();
+		} catch (e) {
+			console.warn(e);
 		}
-		if (soundObj!.isPlaying!) {
-			const status = await playbackObj.pauseAsync();
-			setSoundObj(status);
-		}
-		if (
-			soundObj.isLoaded &&
-			!soundObj.isPlaying &&
-			currentAudio === item.media
-		) {
-			const status = await playbackObj.playAsync();
-			setSoundObj(status);
-		}
-		if (soundObj.didJustFinish) {
-			playbackObj.unloadAsync();
+	}
+
+	function pauseAudio() {
+		try {
+			audioPlayer.pause();
+		} catch (e) {
+			console.warn(e);
 		}
 	}
 
@@ -49,9 +60,9 @@ export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
 					alignItems: "flex-end",
 				}}
 			>
-				<Image
+				<Avatar
 					source={{ uri: item.profile_url }}
-					style={{
+					avatarStyle={{
 						...StyleSheet.absoluteFillObject,
 						width: RFValue(50),
 						height: RFValue(50),
@@ -66,27 +77,32 @@ export default function ChatAudioPlayer({ item }: ChatAudioPlayerProps) {
 					}}
 				/>
 			</View>
-			<TouchableOpacity
-				style={{ padding: 20 }}
-				onPress={async () => {
-					await handleAudio();
-				}}
-			>
-				<Icon
-					name={
-						soundObj
-							? soundObj.isPlaying
-								? soundObj.didJustFinish
-									? "play"
-									: "pause"
-								: "play"
-							: "play"
-					}
-					type="font-awesome-5"
-					size={RFValue(25)}
-					color="whitesmoke"
-				/>
-			</TouchableOpacity>
+			{!audioPlayer.isBuffering ? (
+				audioStatus.playing ? (
+					<TouchableOpacity
+						style={{ padding: 20 }}
+						onPress={() => pauseAudio()}
+					>
+						<Icon
+							name={"pause"}
+							type="font-awesome-5"
+							size={RFValue(25)}
+							color="whitesmoke"
+						/>
+					</TouchableOpacity>
+				) : (
+					<TouchableOpacity style={{ padding: 20 }} onPress={() => playAudio()}>
+						<Icon
+							name={"play"}
+							type="font-awesome-5"
+							size={RFValue(25)}
+							color="whitesmoke"
+						/>
+					</TouchableOpacity>
+				)
+			) : (
+				<ActivityIndicator size={20} />
+			)}
 		</View>
 	);
 }

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
 	Modal,
 	Pressable,
@@ -10,20 +10,23 @@ import {
 	View,
 	Alert,
 } from "react-native";
-import { Audio } from "expo-av";
+import { AudioPlayer, createAudioPlayer } from "expo-audio";
 import {
 	launchImageLibraryAsync,
-	MediaTypeOptions,
-	ExpandImagePickerResult,
-	ImagePickerResult,
-	OpenFileBrowserOptions,
+	UIImagePickerControllerQualityType,
 } from "expo-image-picker";
-import firebase from "firebase";
-import db from "../../config";
-import { encrypt as btoa } from "../customBase64Encryption";
+import {
+	addDoc,
+	collection,
+	doc,
+	serverTimestamp,
+} from "firebase/firestore";
 import { RFValue } from "react-native-responsive-fontsize";
-import { Icon } from "react-native-elements";
+import { Icon } from "@rneui/base";
 import { useFocusEffect } from "@react-navigation/native";
+
+import { encrypt as btoa } from "../customBase64Encryption";
+import { auth, fstore } from "../../config";
 
 interface Props {
 	otherUserId: string;
@@ -33,7 +36,7 @@ interface Props {
 	onRecord: () => void;
 }
 
-export default function ChatInput({
+export function ChatInput({
 	otherUserId,
 	navigation,
 	expoPushToken,
@@ -41,9 +44,10 @@ export default function ChatInput({
 	onRecord,
 }: Props) {
 	const [inputMessage, setInputMessage] = useState("");
-	const [currentUserId] = useState(firebase.auth().currentUser.email);
-	const [sentSound, setSentSound] = useState<Audio.Sound>(null);
+	const [sentSound, setSentSound] = useState<AudioPlayer>(null);
 	const [isModalVisible, setIsModalVisible] = useState(false);
+
+	const currentUserId = auth.currentUser.email;
 	const inputRef = useRef<TextInput>(null);
 
 	const sendNotification = useCallback(async () => {
@@ -69,31 +73,29 @@ export default function ChatInput({
 		});
 	}, []);
 
-	const sendMessage = useCallback((message) => {
+	const sendMessage = useCallback(async (message: string) => {
 		const docId =
 			otherUserId > currentUserId
 				? currentUserId + "-" + otherUserId
 				: otherUserId + "-" + currentUserId;
-		db.collection("chat_sessions")
-			.doc(docId)
-			.collection("messages")
-			.add({
-				created_at: firebase.firestore.FieldValue.serverTimestamp(),
-				message: btoa(message),
-				sender_email: currentUserId,
-				looked: false,
-			})
-			.then(() => {
-				inputRef.current.clear();
-				sentSound.playAsync();
-				sendNotification();
-			});
+		const docRef = doc(fstore, "chat_sessions", docId);
+		const collectionRef = collection(docRef, "messages");
+		await addDoc(collectionRef, {
+			created_at: serverTimestamp(),
+			message: btoa(message),
+			sender_email: currentUserId,
+			looked: false,
+		}).then(() => {
+			inputRef.current.clear();
+			sentSound.play();
+			sendNotification();
+		});
 	}, []);
 
 	const selectPicture = useCallback(async () => {
 		///@ts-ignore
 		const { cancelled, uri } = await launchImageLibraryAsync({
-			mediaTypes: MediaTypeOptions.Images,
+			mediaTypes: ["images"],
 			allowsEditing: false,
 		});
 
@@ -109,16 +111,16 @@ export default function ChatInput({
 		let returnedDt: any;
 		///@ts-ignore
 		await launchImageLibraryAsync({
-			mediaTypes: MediaTypeOptions.Videos,
-			quality: 1,
-			videoQuality: 0.75,
+			mediaTypes: ["videos"],
+			quality: 0.75,
+			videoQuality: UIImagePickerControllerQualityType.Medium,
 			videoMaxDuration: 900000,
 		})
 			.then((dt) => {
 				returnedDt = dt;
 			})
 			.catch((err) => {
-				Alert.alert("Error", "Cannot read file. Maybe the file is corrupted?");
+				Alert.alert("Error", "Cannot read the file. Maybe the file is corrupted?");
 				console.log(err);
 			});
 
@@ -136,21 +138,20 @@ export default function ChatInput({
 	}, []);
 
 	const loadSentSound = useCallback(async () => {
-		const { sound } = await Audio.Sound.createAsync(
+		const sound = createAudioPlayer(
 			require("../../assets/sounds/sent.wav")
 		);
+
 
 		setSentSound(sound);
 	}, []);
 
 	useFocusEffect(
-		React.useMemo(() => {
+		useCallback(() => {
 			loadSentSound();
-			return sentSound
-				? () => {
-						sentSound.unloadAsync();
-				  }
-				: () => {};
+			return () => {
+				sentSound && sentSound.remove();
+			}
 		}, [])
 	);
 

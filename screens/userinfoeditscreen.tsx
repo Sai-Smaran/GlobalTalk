@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import { Component } from "react";
 import {
 	View,
 	Text,
@@ -7,41 +7,50 @@ import {
 	TouchableOpacity,
 	Alert,
 } from "react-native";
-import { Avatar, Input, Icon, Divider } from "react-native-elements";
+import { Avatar, Input, Icon, Divider } from "@rneui/base";
 import {
 	getCameraPermissionsAsync,
 	requestCameraPermissionsAsync,
 	launchImageLibraryAsync,
 	launchCameraAsync,
-	MediaTypeOptions,
 } from "expo-image-picker";
 import { RFValue } from "react-native-responsive-fontsize";
-import { MyDrawerHeader } from "../components/UIComponents/MyHeaders";
-import firebase from "firebase";
-import db from "../config";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import {
+	collection,
+	doc,
+	getDocs,
+	query,
+	updateDoc,
+	where,
+} from "firebase/firestore";
 
-interface Props {
-	navigation: any;
-}
+import { MyDrawerHeader } from "../components/UIComponents/MyHeaders";
+import { auth, fstore, store } from "../config";
+
+import type { DrawerStackScreenProps } from "../navigators/types";
 
 interface State {
 	userId: string;
 	docId: string;
-	about: string
-	image: "#"|string
-	userName: string
-	modalView: boolean
+	about: string;
+	image: "#" | string;
+	userName: string;
+	modalView: boolean;
 }
 
-export default class UserInfoEditingScreen extends Component<Props, State> {
-	state = {
-		userId: firebase.auth().currentUser.email,
-		docId: "",
-		about: "",
-		image: "#",
-		userName: "",
-		modalView: false,
-	};
+export class UserInfoEditingScreen extends Component<DrawerStackScreenProps<'UserInfoEdit'>, State> {
+	constructor(props: DrawerStackScreenProps<"UserInfoEdit">) {
+		super(props)
+		this.state = {
+			userId: auth.currentUser !== null && auth.currentUser.email !== null ? auth.currentUser.email : "",
+			docId: "",
+			about: "",
+			image: "#",
+			userName: "",
+			modalView: false,
+		};
+	}
 
 	getCameraPermissions = async () => {
 		const { status: existingStatus } = await getCameraPermissionsAsync();
@@ -62,7 +71,7 @@ export default class UserInfoEditingScreen extends Component<Props, State> {
 
 	generateKeywords = (userName: string) => {
 		const wordArr = userName.toLowerCase().split(" ");
-		const searchableKeywords = [];
+		const searchableKeywords: any[] = [];
 		let prevKey = "";
 		for (const word of wordArr) {
 			const charArr = word.toLowerCase().split("");
@@ -80,10 +89,11 @@ export default class UserInfoEditingScreen extends Component<Props, State> {
 	takePicture = async () => {
 		//@ts-ignore
 		const { cancelled, uri } = await launchCameraAsync({
-			mediaTypes: MediaTypeOptions.Images,
+			mediaTypes: ["images"],
 			allowsEditing: true,
 			aspect: [1, 1],
-			quality: 1,
+			quality: 0.9,
+
 		});
 
 		if (!cancelled) {
@@ -96,10 +106,11 @@ export default class UserInfoEditingScreen extends Component<Props, State> {
 	selectPicture = async () => {
 		//@ts-ignore
 		const { cancelled, uri } = await launchImageLibraryAsync({
-			mediaTypes: MediaTypeOptions.Images,
+			mediaTypes: ["images"],
 			allowsEditing: true,
 			aspect: [1, 1],
-			quality: 1,
+			quality: 0.9,
+
 		});
 
 		if (!cancelled) {
@@ -110,27 +121,21 @@ export default class UserInfoEditingScreen extends Component<Props, State> {
 	};
 
 	uploadImage = async (uri: string, imageName: string) => {
-		var response = await fetch(uri);
-		var blob = await response.blob();
+		const response = await fetch(uri);
+		const blob = await response.blob();
 
-		var ref = firebase
-			.storage()
-			.ref()
-			.child("user_profiles/" + imageName);
+		const storageRef = ref(store, "user_profiles/" + imageName);
 
-		return ref.put(blob).then(() => {
+		return await uploadBytes(storageRef, blob).then(() => {
 			this.fetchImage(imageName);
+			console.log("upload Successful")
 		});
 	};
 
 	fetchImage = (imageName: string) => {
-		var storageRef = firebase
-			.storage()
-			.ref()
-			.child("user_profiles/" + imageName);
+		const storageRef = ref(store, "user_profiles/" + imageName);
 
-		storageRef
-			.getDownloadURL()
+		getDownloadURL(storageRef)
 			.then((url) => {
 				this.setState({ image: url });
 			})
@@ -140,31 +145,29 @@ export default class UserInfoEditingScreen extends Component<Props, State> {
 			});
 	};
 
-	getUserProfile() {
-		db.collection("users")
-			.where("email", "==", this.state.userId)
-			.get()
-			.then((query) => {
-				query.forEach((doc) => {
-					var data = doc.data();
-					this.setState({
-						userName: data.user_name,
-						about: data.about,
-						docId: doc.id,
-					});
+	async getUserProfile() {
+		console.log("Fetching user info...")
+		const q = query(collection(fstore, "users"), where("email", "==", this.state.userId));
+		await getDocs(q).then((query) => {
+			query.forEach((doc) => {
+				var data = doc.data();
+				this.setState({
+					userName: data.user_name,
+					about: data.about,
+					docId: doc.id,
 				});
 			});
+		});
 	}
 
-	updateProfile(username: string, about: string) {
-		db.collection("users")
-			.doc(this.state.docId)
-			.update({
-				user_name: username,
-				about: about,
-				profile_url: this.state.image,
-				searchable_keywords: this.generateKeywords(username),
-			});
+	async updateProfile(username: string, about: string) {
+		const q = doc(fstore, "users", this.state.docId);
+		await updateDoc(q, {
+			user_name: username,
+			about: about,
+			profile_url: this.state.image,
+			searchable_keywords: this.generateKeywords(username),
+		});
 	}
 
 	componentDidMount() {
@@ -233,7 +236,7 @@ export default class UserInfoEditingScreen extends Component<Props, State> {
 				{this.editModal()}
 				<MyDrawerHeader
 					title="Edit your profile"
-					onDrawerIconPress={()=>this.props.navigation.openDrawer()}
+					onDrawerIconPress={() => this.props.navigation.openDrawer()}
 				/>
 				<Avatar
 					rounded
@@ -242,7 +245,7 @@ export default class UserInfoEditingScreen extends Component<Props, State> {
 					}}
 					onPress={() => this.setState({ modalView: true })}
 					size={"xlarge"}
-					title={this.state.userName.charAt(0).toUpperCase()}
+					title={this.state.image === "#" && this.state.userName.charAt(0).toUpperCase()}
 				/>
 				<Input
 					label="User name"

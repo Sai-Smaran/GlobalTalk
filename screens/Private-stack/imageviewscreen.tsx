@@ -1,39 +1,46 @@
-import React, { Component } from "react";
+import { useCallback, useState } from "react";
 import {
 	View,
 	TouchableOpacity,
 	Text,
-	ActivityIndicator,
 	Dimensions,
+	Image,
+	StyleSheet,
 } from "react-native";
 import { setStatusBarHidden } from "expo-status-bar";
 import { setBackgroundColorAsync, setPositionAsync } from "expo-navigation-bar";
-import ImageViewer from "react-native-image-zoom-viewer";
+import { ReactNativeZoomableView } from "@openspacelabs/react-native-zoomable-view";
 import { RFValue } from "react-native-responsive-fontsize";
 // import { SharedElement } from "react-navigation-shared-element";
-import { Icon } from "react-native-elements";
+import { Icon } from "@rneui/base";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 
-interface Props {
-	route: any
-	navigation: any
-}
+import type { PrivateChatStackScreenProps } from "../../navigators/types";
 
-interface State {
-	images: string[],
-	senderName: string
-}
+export function ImageView() {
+	const navigation = useNavigation<PrivateChatStackScreenProps<'View'>['navigation']>();
+	const route = useRoute<PrivateChatStackScreenProps<'View'>['route']>();
 
-export default class ImageView extends Component<Props, State> {
-	constructor(props: Props | Readonly<Props>) {
-		super(props);
-		this.state = {
-			images: this.props.route.params.images,
-			senderName: this.props.route.params.senderName,
-		};
-	}
+	const image = route.params.image;
+	const senderName = route.params.senderName;
+	const [imageWidth, setImageWidth] = useState(0);
+	const [imageHeight, setImageHeight] = useState(0);
 
-	async componentDidMount() {
+	useFocusEffect(
+		useCallback(() => {
+			onMount();
+			return () => onUnmount();
+		}, [])
+	);
+
+	async function onMount() {
+		console.log("[ImageViewScreen.tsx] -> ", senderName)
+		Image.getSize(image, (w, h) => {
+			setImageWidth(w);
+			setImageHeight(h);
+		});
+
 		setStatusBarHidden(true, "slide");
 		if (Dimensions.get("window").width < 1024) {
 			await setPositionAsync("absolute");
@@ -41,19 +48,45 @@ export default class ImageView extends Component<Props, State> {
 		}
 	}
 
-	async componentWillUnmount() {
+	async function onUnmount() {
 		setStatusBarHidden(false, "slide");
 		await setPositionAsync("relative");
 		await setBackgroundColorAsync("black");
 	}
 
-	async componentDidCatch() {
-		setStatusBarHidden(false, "slide");
-		await setPositionAsync("relative");
-		await setBackgroundColorAsync("black");
-	}
+	return (
+		<SafeAreaProvider>
+			<View style={styles.container}>
+				<Header senderName={senderName} onPressGoBack={() => navigation.goBack()} />
+				<ReactNativeZoomableView
+					initialZoom={1}
+					bindToBorders
+					maxZoom={30}
+					contentWidth={imageWidth}
+					contentHeight={imageHeight}
+					style={{ width: 1000 }}
+				>
+					<Image
+						style={{ width: '100%', height: '100%', resizeMode: 'contain' }}
+						source={{ uri: image }}
+					/>
+				</ReactNativeZoomableView>
+			</View>
+		</SafeAreaProvider>
+	);
+}
 
-	renderHeader = () => (
+const styles = StyleSheet.create({
+	container: {
+		width: "100%",
+		height: "100%",
+		justifyContent: 'center',
+		alignItems: 'center',
+	},
+});
+
+function Header({ senderName, onPressGoBack }: { onPressGoBack: () => void; senderName: string }) {
+	return (
 		<View
 			style={{
 				flexDirection: "row",
@@ -61,10 +94,13 @@ export default class ImageView extends Component<Props, State> {
 				width: "100%",
 				backgroundColor: "#01010169",
 				padding: 20,
+				position: "absolute",
+				zIndex: 2,
+				top: 0
 			}}
 		>
 			<View style={{ flexDirection: "row" }}>
-				<TouchableOpacity onPress={() => this.props.navigation.goBack()}>
+				<TouchableOpacity onPress={onPressGoBack}>
 					<Icon name="arrow-back" color="white" size={RFValue(35)} />
 				</TouchableOpacity>
 				<Text
@@ -73,36 +109,12 @@ export default class ImageView extends Component<Props, State> {
 						fontSize: RFValue(20),
 						marginLeft: RFValue(10),
 						fontFamily: "sans-serif-medium",
+						textAlignVertical: "center"
 					}}
 				>
-					{this.state.senderName}
+					{senderName}
 				</Text>
 			</View>
 		</View>
 	);
-
-	render() {
-		const { navigation } = this.props;
-		return (
-			<SafeAreaProvider>
-				<ImageViewer
-					//@ts-ignore
-					imageUrls={this.state.images}
-					onRequestClose={() => navigation.goBack()}
-					visible
-					index={this.props.route.params.imgIndex}
-					saveToLocalByLongPress={false}
-					enableSwipeDown
-					useNativeDriver
-					loadingRender={() => <ActivityIndicator size="large" color="white" />}
-					onSwipeDown={() => navigation.goBack()}
-					pageAnimateTime={300}
-					flipThreshold={RFValue(60)}
-					doubleClickInterval={300}
-					renderHeader={() => this.renderHeader()}
-					renderIndicator={() => null}
-				/>
-			</SafeAreaProvider>
-		);
-	}
 }

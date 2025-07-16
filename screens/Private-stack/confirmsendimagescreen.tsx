@@ -1,19 +1,26 @@
-import React, { Component } from "react";
+import { Component, Ref } from "react";
 import { View, TouchableOpacity, StyleSheet, Modal, Text } from "react-native";
 import { v4 as uuidv4 } from "uuid";
-import { Icon } from "react-native-elements";
+import { Icon } from "@rneui/base";
 import ImageView from "react-native-image-viewing";
 import { RFValue } from "react-native-responsive-fontsize";
-import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
-import firebase from "firebase";
-import db from "../../config";
+import { launchImageLibraryAsync } from "expo-image-picker";
+import {
+	addDoc,
+	collection,
+	doc,
+	query,
+	serverTimestamp,
+	where,
+	getDocs
+} from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { TextInput } from "react-native-gesture-handler";
+
+import { auth, fstore, store } from "../../config";
 import CircularProgress from "../../components/UIComponents/circular-progress";
 
-interface Props {
-	route: any;
-	navigation: any;
-	inputRef: any;
-}
+import type { PrivateChatStackScreenProps } from "../../navigators/types";
 
 interface State {
 	currentUserId: string;
@@ -29,17 +36,15 @@ interface State {
 	expoPushToken: string;
 }
 
-export default class ConfirmSendImage extends Component<Props, State> {
-	viewerRef: any;
-	inputRef: any;
+export class ConfirmSendImage extends Component<PrivateChatStackScreenProps<'Confirm'>, State> {
+	inputRef: Ref<TextInput>;
 	viewNo: number;
-	constructor(props: Props) {
+	constructor(props: PrivateChatStackScreenProps<"Confirm">) {
 		super(props);
-		this.viewerRef;
 		this.state = {
-			currentUserId: firebase.auth().currentUser.email,
-			imageUrls: this.props.route.params.imageUrls,
-			otherUserId: this.props.route.params.senderId,
+			currentUserId: auth.currentUser !== null && auth.currentUser.email !== null ? auth.currentUser.email : "",
+			imageUrls: this.params.imageUrls,
+			otherUserId: this.params.senderId,
 			currentUserName: "",
 			visible: false,
 			caption: "",
@@ -53,12 +58,14 @@ export default class ConfirmSendImage extends Component<Props, State> {
 		this.viewNo = 0;
 	}
 
+	params = this.props.route.params
+
 	addImage = async () => {
 		let imgUrls = this.state.imageUrls;
 		//@ts-ignore
 		const { cancelled, uri } = await launchImageLibraryAsync({
 			quality: 1,
-			mediaTypes: MediaTypeOptions.Images,
+			mediaTypes: ["images"],
 			allowsEditing: false,
 		});
 
@@ -73,7 +80,7 @@ export default class ConfirmSendImage extends Component<Props, State> {
 			console.log("Can't find user's token");
 			return;
 		}
-		const response = await fetch("https://exp.host/--/api/v2/push/send", {
+		await fetch("https://exp.host/--/api/v2/push/send", {
 			method: "POST",
 			headers: {
 				Accept: "application/json",
@@ -85,9 +92,11 @@ export default class ConfirmSendImage extends Component<Props, State> {
 				title: this.state.currentUserName,
 				body: "Image 📷",
 			}),
-		}).then((data)=>{
-      console.log(data.json())
-    });
+		})
+			.then((data) => {
+				console.log(data.json());
+			})
+			.catch(console.error);
 	};
 
 	sendMessage = (imgArray: string[]): void => {
@@ -95,23 +104,23 @@ export default class ConfirmSendImage extends Component<Props, State> {
 			this.state.otherUserId > this.state.currentUserId
 				? this.state.currentUserId + "-" + this.state.otherUserId
 				: this.state.otherUserId + "-" + this.state.currentUserId;
-		db.collection("chat_sessions")
-			.doc(docId)
-			.collection("messages")
-			.add({
-				created_at: firebase.firestore.FieldValue.serverTimestamp(),
-				media: imgArray,
-				media_type: "image",
-				sender_email: this.state.currentUserId,
-				sender_name: this.state.currentUserName,
-			})
-			.then(async () => await this.sendNotification());
+		const docRef = doc(fstore, "chat_sessions", docId);
+		const collectionRef = collection(docRef, "messages");
+		addDoc(collectionRef, {
+			created_at: serverTimestamp(),
+			media: imgArray,
+			media_type: "image",
+			sender_email: this.state.currentUserId,
+			sender_name: this.state.currentUserName,
+		}).then(async () => await this.sendNotification());
 	};
 
 	getUserName = () => {
-		db.collection("users")
-			.where("email", "==", this.state.currentUserId)
-			.get()
+		const q = query(
+			collection(fstore, "users"),
+			where("email", "==", this.state.currentUserId)
+		);
+		getDocs(q)
 			.then((query) => {
 				query.forEach((doc) =>
 					this.setState({
@@ -127,19 +136,19 @@ export default class ConfirmSendImage extends Component<Props, State> {
 
 	uploadImgs = async () => {
 		let imgUrls = this.state.imageUrls;
-		var imgUrlList = [];
+		var imgUrlList:any[] = [];
 		imgUrls.forEach(async (url) => {
 			let imgUrl = url.uri;
 			const response = await fetch(imgUrl);
 			const blob = await response.blob();
 			let randomId = uuidv4();
 
-			const ref = firebase.storage().ref();
+			const refer = ref(store, `shared_media/${randomId}`);
 
-			const uploadTask = ref.child(`shared_media/${randomId}`).put(blob);
+			const uploadTask = uploadBytesResumable(refer, blob);
 
 			uploadTask.on(
-				firebase.storage.TaskEvent.STATE_CHANGED,
+				"state_changed",
 				(snapshot) => {
 					let uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
 					this.setState({ progress: uploadProgress });
@@ -148,7 +157,7 @@ export default class ConfirmSendImage extends Component<Props, State> {
 					console.log("Error: " + err.message);
 				},
 				() => {
-					uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+					getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
 						imgUrlList.push(downloadURL);
 						let sentImgsNumber = this.state.imagesUploaded;
 						sentImgsNumber++;
@@ -156,7 +165,7 @@ export default class ConfirmSendImage extends Component<Props, State> {
 						if (sentImgsNumber === this.state.imageUrls.length) {
 							this.sendMessage(imgUrlList);
 							setTimeout(() => {
-								this.props.navigation.navigate("Chat");
+								this.props.navigation.popTo("Chat");
 							}, 5000);
 						}
 					});
@@ -214,8 +223,8 @@ export default class ConfirmSendImage extends Component<Props, State> {
 										? "Uploaded Images"
 										: "Uploaded Image"
 									: this.state.imageUrls.length > 1
-									? "Uploading Images...."
-									: "Uploading Image...."}
+										? "Uploading Images...."
+										: "Uploading Image...."}
 							</Text>
 							<Text
 								style={{
@@ -235,7 +244,7 @@ export default class ConfirmSendImage extends Component<Props, State> {
 		);
 	};
 
-	renderHeader = (index) => {
+	renderHeader = (index: number) => {
 		return (
 			<View style={styles.headerContainer}>
 				<TouchableOpacity
@@ -292,7 +301,7 @@ export default class ConfirmSendImage extends Component<Props, State> {
 		);
 	};
 
-	keyExtractor = (_, index) => index.toString();
+	keyExtractor = (_: any, index: number) => index.toString();
 
 	render() {
 		return (

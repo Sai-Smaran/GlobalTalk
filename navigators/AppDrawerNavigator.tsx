@@ -1,19 +1,21 @@
-import React, { useEffect } from "react";
-import { Icon } from "react-native-elements";
+import { useCallback, useEffect, useState } from "react";
 import { useWindowDimensions, StyleSheet } from "react-native";
 import { DeviceType, getDeviceTypeAsync } from "expo-device";
 import { createDrawerNavigator } from "@react-navigation/drawer";
+import { Icon } from "@rneui/base";
 import { RFValue } from "react-native-responsive-fontsize";
 
-import PrivateChatStackNavigator from "./PrivateChatStackNavigator";
-import CustomSideBarMenu from "./CustomSideBarMenu";
-import UserInfoEditingScreen from "../../screens/userinfoeditscreen";
-import PublicChat from "../../screens/publicchatscreen";
+import { PrivateChatStackNavigator } from "./PrivateChatStackNavigator";
+import { CustomSideBarMenu } from "./CustomSideBarMenu";
+import { UserInfoEditingScreen } from "../screens/userinfoeditscreen";
+import { PublicChat } from "../screens/publicchatscreen";
 
-const Drawer = createDrawerNavigator();
+import type { DrawerNavigationParamList } from "./types";
+
+const Drawer = createDrawerNavigator<DrawerNavigationParamList>();
 
 export default function AppDrawerNavigator() {
-	const [currentDeviceType, setcurrentDeviceType] = React.useState("");
+	const [currentDeviceType, setcurrentDeviceType] = useState("");
 	const { width } = useWindowDimensions();
 
 	const deviceTypeMap = {
@@ -25,16 +27,16 @@ export default function AppDrawerNavigator() {
 	};
 
 	useEffect(
-		React.useMemo(() => {
+		useCallback(() => {
 			getDeviceTypeAsync().then((dev) => {
 				setcurrentDeviceType(deviceTypeMap[dev]);
 			});
-			return () => {};
 		}, [])
 	);
 
 	return (
 		<Drawer.Navigator
+			id={undefined}
 			initialRouteName="Public"
 			drawerContent={(props) => <CustomSideBarMenu {...props} />}
 			screenOptions={{
@@ -45,8 +47,8 @@ export default function AppDrawerNavigator() {
 							? "permanent"
 							: "slide"
 						: width >= 480
-						? "permanent"
-						: "slide",
+							? "permanent"
+							: "slide",
 				drawerLabelStyle: styles.labelStyles,
 			}}
 		>

@@ -2,5 +2,6 @@
 	"extends": "expo/tsconfig.base",
 	"compilerOptions": {
 		"allowJs": false,
+		"moduleResolution": "bundler",
 	}
 }

@@ -1,118 +1,109 @@
-import React, { Component } from "react";
-import { View, FlatList, Platform, Dimensions } from "react-native";
-import { SearchBar, ListItem, Avatar } from "react-native-elements";
+import { useState } from "react";
+import { View, FlatList } from "react-native";
+import { SearchBar, ListItem, Avatar } from "@rneui/base";
 import { RFValue } from "react-native-responsive-fontsize";
-import { MyDrawerHeader } from "../../components/UIComponents/MyHeaders"
-import db from "../../config";
-import firebase from "firebase";
+import { query, collection, where, getDocs, limit } from "firebase/firestore";
+import { useNavigation } from "@react-navigation/native";
 
-interface Props {
-  navigation: any
-}
+import { MyDrawerHeader } from "../../components/UIComponents/MyHeaders";
+import { fstore } from "../../config";
 
-interface State {
-  userId: string
-  search: string
-  allResults: any[]
-}
+import type { PrivateChatStackScreenProps } from "../../navigators/types";
 
-export default class SearchUser extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      userId: firebase.auth().currentUser.email,
-      search: "",
-      allResults: [],
-    };
-  }
+export function SearchUser() {
+	const [search, setSearch] = useState<string>("");
+	const [allResults, setAllResults] = useState<any[]>([]);
+	const navigation = useNavigation<PrivateChatStackScreenProps<'Search'>['navigation']>()
 
-  getUsers = () => {
-    db.collection("users")
-      .where(
-        "searchable_keywords",
-        "array-contains",
-        this.state.search.trim().toLowerCase()
-      )
-      .get()
-      .then((query) => {
-        var searchResults = [];
-        query.forEach((doc) => {
-          searchResults.push(doc.data());
-        });
-        this.setState({
-          allResults: searchResults,
-        });
-      });
-  };
+	const getUsers = () => {
+		const q = query(
+			collection(fstore, "users"),
+			where(
+				"searchable_keywords",
+				"array-contains",
+				search
+			),
+			limit(20)
+		);
+		getDocs(q)
+			.then((query) => {
+				let searchResults = [];
+				query.forEach((doc) => {
+					searchResults.push(doc.data());
+				});
+				setAllResults(searchResults)
+			});
+	};
 
-  keyExtractor = (_, index: number) => index.toString();
+	const keyExtractor = (_, index: number) => index.toString();
 
-  aboutShortener = (message: string) => {
-    let charLen = Math.round(Dimensions.get("window").width / 13);
-    console.log(charLen);
-    if (message.length > charLen) {
-      return message.slice(0, charLen - 3) + "...";
-    } else {
-      return message;
-    }
-  };
+	const renderItem = ({ item }: {
+		item: {
+			profile_url: string;
+			user_name: string;
+			about: string;
+			email: string;
+			push_token: string;
+		}
+	}) => (
+		<ListItem
+			onPress={() => {
+				navigation.navigate("Chat", {
+					details: item,
+				});
+			}}
+			onLongPress={() =>
+				navigation.navigate("About", { details: item })
+			}
+		>
+			<Avatar
+				rounded
+				source={{ uri: item.profile_url }}
+				titleStyle={{ color: "black" }}
+				title={item.profile_url === "#" && item.user_name.charAt(0).toUpperCase()}
+				size={RFValue(60)}
+			/>
+			<ListItem.Content>
+				<ListItem.Title style={{ fontWeight: "bold", fontSize: RFValue(20) }}>
+					{item.user_name}
+				</ListItem.Title>
+				<ListItem.Subtitle ellipsizeMode="tail">
+					{item.about}
+				</ListItem.Subtitle>
+			</ListItem.Content>
+			<ListItem.Chevron color="#ededed" size={50} />
+		</ListItem>
+	);
 
-  renderItem = ({ item }) => (
-    <ListItem
-      onPress={() => {
-          this.props.navigation.navigate("Chat", {
-            details: item,
-          });
-      }}
-      onLongPress={() =>
-        this.props.navigation.navigate("About", { details: item })
-      }
-    >
-      <Avatar
-        rounded
-        source={{ uri: item.profile_url }}
-        title={item.user_name.charAt(0).toUpperCase()}
-        size={RFValue(60)}
-      />
-      <ListItem.Content>
-        <ListItem.Title style={{ fontWeight: "bold", fontSize: RFValue(20) }}>
-          {item.user_name}
-        </ListItem.Title>
-        <ListItem.Subtitle>
-          {item.about ? this.aboutShortener(item.about) : ""}
-        </ListItem.Subtitle>
-      </ListItem.Content>
-      <ListItem.Chevron color="#ededed" size={50} />
-    </ListItem>
-  );
-
-  render() {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#ededed" }}>
-        <MyDrawerHeader
-          title="Private chat"
-          onDrawerIconPress={()=>this.props.navigation.openDrawer()}
-        />
-        <SearchBar
-          platform="android"
-          autoCapitalize="none"
-          autoCorrect={false}
-          clearButtonMode="while-editing"
-          value={this.state.search}
-          onChangeText={(text) => this.setState({ search: text })}
-          placeholder="Search"
-          onSubmitEditing={() => {
-            this.getUsers();
-          }}
-          returnKeyType="search"
-          onClear={() => this.setState({ allResults: [] })}
-        />
-        <FlatList
-          keyExtractor={this.keyExtractor}
-          data={this.state.allResults}
-          renderItem={this.renderItem}
-        />
-      </View>
-    );
-  }
+	return (
+		<View style={{ flex: 1, backgroundColor: "#ededed" }}>
+			<MyDrawerHeader
+				title="Private chat"
+				onDrawerIconPress={() => navigation.openDrawer()}
+			/>
+			<FlatList
+				ListHeaderComponent={
+					<SearchBar
+						platform="android"
+						autoCapitalize="none"
+						autoCorrect={false}
+						clearButtonMode="while-editing"
+						value={search}
+						key="search"
+						onChangeText={(text) => setSearch(() => text.trim().toLowerCase())}
+						placeholder="Search"
+						onSubmitEditing={() =>
+							getUsers()
+						}
+						returnKeyType="search"
+						onClear={() => setAllResults([])}
+					/>}
+				keyExtractor={keyExtractor}
+				data={allResults}
+				renderItem={renderItem}
+				stickyHeaderIndices={[0]}
+				stickyHeaderHiddenOnScroll
+			/>
+		</View>
+	);
 }

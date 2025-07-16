@@ -1,20 +1,22 @@
-import React from "react";
+import { useNavigation } from "@react-navigation/native";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
 
+import type { PrivateChatStackScreenProps } from "../../navigators/types";
+
 interface Props {
-  navigation: any,
   item: {
-		sender_email: string,
-		media: string[],
-		media_type: "image" | "audio",
-		message: string,
-		profile_url: string,
-		sender_name: string    
+    sender_email: string,
+    media: string[],
+    media_type: "image" | "audio",
+    message: string,
+    profile_url: string,
+    sender_name: string
   }
 }
-
-export default function ImageTiles({ navigation, item }: Props) {
+export default function ImageTiles({ item }:Props) {
+  const navigation = useNavigation<PrivateChatStackScreenProps<'Chat'>['navigation']>();
+  
   switch (item.media.length) {
     case 1:
       return (
@@ -22,8 +24,8 @@ export default function ImageTiles({ navigation, item }: Props) {
           <TouchableOpacity
             style={{ padding: 2.5 }}
             onPress={() =>
-              navigation.navigate("List", {
-                images: item.media,
+              navigation.navigate('View', {
+                image: item.media[0],
                 senderName: item.sender_name,
               })
             }

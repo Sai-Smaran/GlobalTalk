@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import { Component } from "react";
 import {
 	View,
 	TextInput,
@@ -9,62 +9,77 @@ import {
 	Text,
 	Image,
 } from "react-native";
-import { Icon, Avatar } from "react-native-elements";
+import { Icon } from "@rneui/base";
+import { Avatar } from "@rneui/base";
 import { RFValue } from "react-native-responsive-fontsize";
-import db from "../config";
-import firebase from "firebase";
 import { isDevice } from "expo-device";
-import { MyDrawerHeader } from "../components/UIComponents/MyHeaders";
 import * as Notifications from "expo-notifications";
+import {
+	FieldValue,
+	Unsubscribe,
+	addDoc,
+	collection,
+	doc,
+	getDocs,
+	onSnapshot,
+	orderBy,
+	query,
+	serverTimestamp,
+	updateDoc,
+	where,
+} from "firebase/firestore";
+import { getDownloadURL, ref } from "firebase/storage";
+
+import { auth, fstore, store } from "../config";
+import type { PublicChatStackScreenProps } from "../navigators/types";
+import { MyDrawerHeader } from "../components/UIComponents/MyHeaders";
 
 Notifications.setNotificationHandler({
+	//@ts-ignore
 	handleNotification: async () => ({
-		shouldShowAlert: false,
+		shouldShowAlert: true,
 		shouldPlaySound: false,
 		shouldSetBadge: true,
 	}),
 });
 
-interface Props {
-	navigation: any;
-}
-
 interface State {
-	userId: string;
+	userId: string | null;
 	inputMessage: string;
 	allMessages: Message[];
 	userName: string;
 	pfpUrl: "#" | string;
-	docId: string
+	docId: string;
 }
 
 interface Message {
-	created_at: firebase.firestore.FieldValue;
+	created_at: FieldValue;
 	looked: boolean;
 	message: string;
 	sender_email: string;
 }
 
-export default class PublicChat extends Component<Props, State> {
-	inputRef: TextInput;
-	listRef: FlatList<any>;
-	unsubscribe: any;
-	constructor(props: Props) {
+export class PublicChat extends Component<PublicChatStackScreenProps<'Public'>, State> {
+	inputRef: TextInput | null;
+	listRef: FlatList<Message> | null;
+	unsubscribe: Unsubscribe;
+
+	constructor(props: PublicChatStackScreenProps<"Public">) {
 		super(props);
 		this.state = {
-			userId: firebase.auth().currentUser.email,
+			userId: auth.currentUser === null ? "" : auth.currentUser.email,
 			inputMessage: "",
 			allMessages: [],
 			userName: "",
 			pfpUrl: "#",
 			docId: "",
 		};
-		this.unsubscribe = null;
-		this.inputRef = null;
-		this.listRef = null;
+		this.unsubscribe;
+		this.inputRef;
+		this.listRef;
 	}
 
-	registerForPushNotificationsAsync = async () => {
+	private registerForPushNotificationsAsync = async () => {
 		if (isDevice) {
 			const { status: existingStatus } =
 				await Notifications.getPermissionsAsync();
@@ -78,9 +93,9 @@ export default class PublicChat extends Component<Props, State> {
 			}
 			console.log(finalStatus);
 			try {
-				let token = (await Notifications.getExpoPushTokenAsync()).data;
-				console.log(token);
-				db.collection("users").doc(this.state.docId).update({
+				const token = (await Notifications.getExpoPushTokenAsync()).data;
+				await updateDoc(
+					doc(fstore, "users", this.state.docId), {
 					push_token: token,
 				});
 			} catch (error) {
@@ -89,15 +104,11 @@ export default class PublicChat extends Component<Props, State> {
 		}
 	};
 
-	fetchUserImage = () => {
-		var storageRef = firebase
-			.storage()
-			.ref()
-			.child("user_profiles/" + this.state.userId);
+	private fetchUserImage = () => {
+		const storageRef = ref(store, "user_profiles/" + this.state.userId);
 
-		storageRef
-			.getDownloadURL()
-			.then((url) => {
+		getDownloadURL(storageRef)
+			.then((url: string) => {
 				this.setState({
 					pfpUrl: url,
 				});
@@ -108,56 +119,59 @@ export default class PublicChat extends Component<Props, State> {
 			});
 	};
 
-	getAllPublicMessages = () => {
-		this.unsubscribe = db
-			.collection("messages")
-			.where("target", "==", "all")
-			.orderBy("created_at")
-			.onSnapshot((snapshot) => {
-				var messages = [];
-				snapshot.forEach((doc) => {
-					messages.push(doc.data());
-				});
-				this.setState({
-					allMessages: messages,
-				});
+	private getAllPublicMessages = () => {
+		const q = query(
+			collection(fstore, "messages"),
+			where("target", "==", "all"),
+			orderBy("created_at")
+		);
+		this.unsubscribe = onSnapshot(q, (snapshot) => {
+			let messages: any[] = [];
+			snapshot.forEach((doc) => {
+				messages.push(doc.data());
 			});
-		console.log(this.unsubscribe);
+			this.setState({
+				allMessages: messages,
+			});
+		});
 	};
 
-	getUserName() {
-		db.collection("users")
-			.where("email", "==", this.state.userId)
-			.get()
-			.then(async (querySnapshot) => {
-				querySnapshot.forEach((doc) => {
-					this.setState({
-						userName: doc.data().user_name,
-						docId: doc.id,
-					});
+	private getUserName() {
+		const q = query(
+			collection(fstore, "users"),
+			where("email", "==", this.state.userId)
+		);
+		getDocs(q).then(async (querySnapshot) => {
+			querySnapshot.forEach((doc) => {
+				this.setState({
+					userName: doc.data().user_name,
+					docId: doc.id,
 				});
-				await this.registerForPushNotificationsAsync();
 			});
+			await this.registerForPushNotificationsAsync();
+		});
 	}
 
-	keyExtractor = (_: any, index: number) => index.toString();
+	private keyExtractor = (_: any, index: number) => index.toString();
 
-	renderItem = ({ item }) => {
+	private renderItem = ({ item }) => {
 		return (
 			<View
-				style={
-					item.sender_email !== this.state.userId
-						? { flexDirection: "row", padding: RFValue(3) }
-						: { flexDirection: "row-reverse", padding: RFValue(3) }
-				}
+				style={{
+					padding: RFValue(3),
+					flexDirection:
+						item.sender_email !== this.state.userId ? "row" : "row-reverse",
+				}}
 			>
 				<Avatar
 					source={{
 						uri: item.url,
 					}}
+					titleStyle={{ color: "black" }}
+
 					rounded
 					size={RFValue(70)}
-					title={item.sender_name.charAt(0).toUpperCase()}
+					title={item.url === "#" && item.sender_name.charAt(0).toUpperCase()}
 				/>
 				<View>
 					<Text style={{ fontWeight: "bold", fontSize: RFValue(20) }}>
@@ -179,20 +193,18 @@ export default class PublicChat extends Component<Props, State> {
 		);
 	};
 
-	sendMessage = (message: string) => {
-		db.collection("messages")
-			.add({
-				created_at: firebase.firestore.FieldValue.serverTimestamp(),
-				message: message,
-				sender_name: this.state.userName,
-				sender_email: this.state.userId,
-				target: "all",
-				url: this.state.pfpUrl,
-			})
-			.then(() => {
-				this.inputRef.clear();
-				this.listRef.scrollToEnd({ animated: true });
-			});
+	private sendMessage = (message: string) => {
+		addDoc(collection(fstore, "messages"), {
+			created_at: serverTimestamp(),
+			message: message,
+			sender_name: this.state.userName,
+			sender_email: this.state.userId,
+			target: "all",
+			url: this.state.pfpUrl,
+		}).then(() => {
+			this.inputRef && this.inputRef.clear();
+			this.listRef && this.listRef.scrollToEnd({ animated: true });
+		});
 	};
 
 	componentDidMount() {
@@ -214,7 +226,7 @@ export default class PublicChat extends Component<Props, State> {
 			>
 				<MyDrawerHeader
 					title="Public chat"
-					onDrawerIconPress={()=>this.props.navigation.openDrawer()}
+					onDrawerIconPress={() => this.props.navigation.openDrawer()}
 				/>
 				<View style={{ height: "80%", backgroundColor: "#ebebeb" }}>
 					{this.state.allMessages.length !== 0 ? (
@@ -222,7 +234,7 @@ export default class PublicChat extends Component<Props, State> {
 							keyExtractor={this.keyExtractor}
 							data={this.state.allMessages}
 							renderItem={this.renderItem}
-							ref={(chatlist) => (this.listRef = chatlist)}
+							ref={(flatlist) => { this.listRef = flatlist }}
 							style={{ flex: 0 }}
 						/>
 					) : (
@@ -234,7 +246,6 @@ export default class PublicChat extends Component<Props, State> {
 							}}
 						>
 							<Image
-								// @ts-ignore
 								source={require("../assets/static-images/sad-bubble.png")}
 								width={288}
 								height={287}
@@ -252,14 +263,14 @@ export default class PublicChat extends Component<Props, State> {
 						backgroundColor: "#ebebeb",
 						justifyContent: "center",
 						position: "absolute",
-						bottom: 0
+						bottom: 0,
 					}}
 				>
 					<TextInput
 						style={styles.chatInput}
 						placeholder="Type something here..."
 						maxLength={128}
-						ref={(input) => (this.inputRef = input)}
+						ref={(input) => { this.inputRef = input }}
 						onChangeText={(text) =>
 							this.setState({
 								inputMessage: text,
@@ -268,7 +279,6 @@ export default class PublicChat extends Component<Props, State> {
 						value={this.state.inputMessage}
 						numberOfLines={1}
 						multiline
-						passwordRules=""
 					/>
 					<TouchableOpacity
 						onPress={() => {
@@ -302,7 +312,7 @@ const styles = StyleSheet.create({
 		elevation: 8,
 		fontSize: RFValue(20),
 		paddingLeft: 10,
-		flex: 1
+		flex: 1,
 	},
 	messagePopupConatiner: {
 		backgroundColor: "#80AED7",

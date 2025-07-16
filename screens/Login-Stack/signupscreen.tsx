@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
 	View,
 	Text,
@@ -9,19 +9,25 @@ import {
 	ActivityIndicator,
 } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
-import db from "../../config";
-import firebase from "firebase";
-import { MyStackHeader } from "../../components/UIComponents/MyHeaders";
+import { browserLocalPersistence, createUserWithEmailAndPassword, setPersistence } from "firebase/auth";
+import { addDoc, collection } from "firebase/firestore";
+import { useNavigation } from "@react-navigation/native";
 
-export default function SignUpScreen({ navigation }: { navigation: any }): JSX.Element {
+import { auth, fstore } from "../../config";
+import { MyStackHeader } from "../../components/UIComponents/MyHeaders";
+import type { LoginStackScreenProps } from "../../navigators/types";
+
+export default function SignUpScreen() {
 	const [userName, setUserName] = useState("");
 	const [emailAddress, setEmailAddress] = useState("");
 	const [password, setPassword] = useState("");
 	const [password2, setPassword2] = useState("");
 	const [loading, setLoading] = useState(false);
-	const emailRef = useRef<TextInput>(null);
-	const passRef = useRef<TextInput>(null);
-	const passverRef = useRef<TextInput>(null);
+
+	const emailRef = useRef<TextInput | null>(null);
+	const passRef = useRef<TextInput | null>(null);
+	const passverRef = useRef<TextInput | null>(null);
+	const navigation = useNavigation<LoginStackScreenProps<'SignUp'>['navigation']>();
 
 	const generateKeywords = (userName: string) => {
 		const wordArr = userName.toLowerCase().split(" ");
@@ -42,67 +48,69 @@ export default function SignUpScreen({ navigation }: { navigation: any }): JSX.E
 
 	const signUp = (email: string, pass: string) => {
 		if (password !== password2) {
-			Alert.alert("Error", "Both passwords are not the same/nPlease try again");
+			Alert.alert(
+				"Error",
+				"Both passwords are not the same./nPlease try again"
+			);
 		} else {
 			setLoading(true);
-			firebase
-				.auth()
-				.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-				.then(() => {
-					firebase
-						.auth()
-						.createUserWithEmailAndPassword(email, pass)
-						.then(() => {
-							setLoading(false);
-							db.collection("users").add({
-								email: email,
-								user_name: userName,
-								searchable_keywords: generateKeywords(userName),
-								profile_url: "#",
-							});
-						})
-						.catch((error) => {
-							Alert.alert("Error", error.message);
-							console.log(error.code);
+			setPersistence(auth, browserLocalPersistence).then(() => {
+				createUserWithEmailAndPassword(auth, email, pass)
+					.then(() => {
+						setLoading(false);
+						const docQ = collection(fstore, "users");
+						addDoc(docQ, {
+							email: email,
+							user_name: userName,
+							searchable_keywords: generateKeywords(userName),
+							profile_url: "#",
 						});
-				});
+					})
+					.catch((error) => {
+						Alert.alert("Error", error.message);
+						console.log(error.code);
+					});
+			});
 		}
 	};
 
 	return (
 		<View>
-			<MyStackHeader title="Sign up" onBackPress={()=>navigation.goBack()} />
+			<MyStackHeader title="Sign up" onBackPress={() => navigation.goBack()} />
 			<View style={{ alignItems: "center" }}>
 				<TextInput
 					placeholder="Username"
-					autoCompleteType="username"
+					autoComplete="username"
 					maxLength={10}
 					style={styles.loginInput}
 					onChangeText={(text) => setUserName(text)}
-					onSubmitEditing={() => emailRef.current.focus()}
+					onSubmitEditing={() => emailRef !== null && emailRef.current.focus()}
 					value={userName.trim()}
 				/>
 				<TextInput
 					placeholder="Email address"
 					style={styles.loginInput}
-					autoCompleteType="email"
+					autoComplete="email"
 					keyboardType="email-address"
 					onChangeText={(text) => setEmailAddress(text)}
-					onSubmitEditing={() => passRef.current.focus()}
+					onSubmitEditing={() => passRef !== null && passRef.current.focus()}
 					ref={emailRef}
 				/>
 				<TextInput
 					placeholder="Password"
 					style={styles.loginInput}
-					autoCompleteType="password"
+					autoComplete="new-password"
+					keyboardType="visible-password"
 					secureTextEntry={true}
 					onChangeText={(text) => setPassword(text)}
-					onSubmitEditing={() => passverRef.current.focus()}
+					onSubmitEditing={() => passverRef !== null && passverRef.current.focus()}
 					ref={passRef}
 				/>
 				<TextInput
 					placeholder="Confirm password"
 					style={styles.loginInput}
+					autoComplete="new-password"
+					keyboardType="visible-password"
 					secureTextEntry={true}
 					onChangeText={(text) => setPassword2(text)}
 					onSubmitEditing={() => {

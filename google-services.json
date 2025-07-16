@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "730399382561-7n7oqudj9sd6gtn3qovm3bglc0ekqfd8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sai.globaltalk",
+            "certificate_hash": "8d80641b8b2134880117d2e9ada35af83364cf53"
+          }
+        },
+        {
           "client_id": "730399382561-7gnu9pm9j2haf33rp9r7ulli8jiar304.apps.googleusercontent.com",
           "client_type": 3
         }

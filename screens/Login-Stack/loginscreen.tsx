@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
 	View,
 	Text,
@@ -11,65 +11,69 @@ import {
 	useWindowDimensions,
 } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
-import { Divider, Header, Icon } from "react-native-elements";
-import firebase from "firebase";
-import { useFocusEffect } from "@react-navigation/native";
+import { Divider, Header, Icon } from "@rneui/base";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
-export default function LoginScreen({ navigation }: { navigation: any }) {
+import { auth } from "../../config";
+import type { LoginStackScreenProps } from "../../navigators/types";
+
+export default function LoginScreen() {
 	const [emailId, setEmailId] = useState("");
 	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [passNotVisible, setPassNotVisible] = useState(true);
-	const inputRef = useRef<TextInput>(null);
+
 	const { width } = useWindowDimensions();
+	const navigation = useNavigation<LoginStackScreenProps<'Login'>['navigation']>();
+
+	const inputRef = useRef<TextInput | null>(null);
 
 	const loginWithZucc = () => {
-		//TODO: Add login with facebook
+		//TODO: Implement Facebook Login using Firebase Authentication.
+		// Use the FacebookAuthProvider to authenticate users with their Facebook accounts.
+		// Ensure proper configuration of the Firebase project, including enabling Facebook as a sign-in provider.
+		// Handle errors gracefully and provide appropriate feedback to the user.
 		return Alert.alert(
 			"Work in progress",
 			"Login with facebook is still under work in progress"
 		);
-	};
-
+	}
+	
 	const _twoFactorAuth = () => {
 		//TODO: Add 2fa
 	};
 
+	//TODO: Implement Google Sign-In using Firebase Authentication.
+	// Use the GoogleAuthProvider to authenticate users with their Google accounts.
+	// Ensure proper configuration of the Firebase project and handle errors gracefully.
+	//TODO: Add login with google
 	const googleLogin = () => {
-		//TODO: Add login with google
 		return Alert.alert(
 			"Work in progress",
 			"Login with google is still under work in progress"
 		);
-	};
+	}
 
 	const emailLogin = (email: string, pass: string) => {
-		firebase
-			.auth()
-			.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+		setLoading(true);
+		signInWithEmailAndPassword(auth, email, pass)
 			.then(() => {
-				firebase
-					.auth()
-					.signInWithEmailAndPassword(email, pass)
-					.catch((error) => {
-						var errorCode = error.code;
-						var errorMessage = error.message;
-						console.log(errorCode);
-						setLoading(false);
-						return Alert.alert("Error", errorMessage);
-					});
+				// Handle successful login if needed
+				setLoading(false);
 			})
 			.catch((error) => {
-				console.log(`Error : ${error.code},
-					${error.message}
-				`);
+				const errorCode = error.code;
+				const errorMessage = error.message;
+				console.log(errorCode);
+				setLoading(false);
+				return Alert.alert("Error", errorMessage);
 			});
 	};
 
 	useFocusEffect(
-		useMemo(() => {
+		useCallback(() => {
 			setLoading(false);
-			return () => {};
 		}, [])
 	);
 
@@ -98,15 +102,11 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 						<TextInput
 							placeholder="Email ID"
 							placeholderTextColor="gray"
-							autoCompleteType="email"
+							autoComplete="email"
 							keyboardType="email-address"
-							onSubmitEditing={() => {
-								inputRef.current.focus();
-							}}
+							onSubmitEditing={() => inputRef.current && inputRef.current.focus()}
 							style={styles.loginInput}
-							onChangeText={(text) => {
-								setEmailId(text.trim());
-							}}
+							onChangeText={(text) => setEmailId(text.trim())}
 							returnKeyType="next"
 							value={emailId}
 						/>
@@ -121,7 +121,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 							<TextInput
 								placeholder="Password"
 								placeholderTextColor="gray"
-								autoCompleteType="password"
+								autoComplete="current-password"
 								keyboardType="default"
 								style={[
 									styles.loginInput,
@@ -135,13 +135,8 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 								]}
 								ref={inputRef}
 								secureTextEntry={passNotVisible}
-								onSubmitEditing={() => {
-									emailLogin(emailId, password);
-									setLoading(true);
-								}}
-								onChangeText={(text) => {
-									setPassword(text);
-								}}
+								onSubmitEditing={() => emailLogin(emailId, password)}
+								onChangeText={(text) => setPassword(text)}
 								autoCorrect={false}
 							/>
 							<TouchableOpacity
@@ -155,9 +150,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 									borderTopRightRadius: 10,
 									borderLeftWidth: 0,
 								}}
-								onPress={() => {
-									setPassNotVisible(!passNotVisible);
-								}}
+								onPress={() => setPassNotVisible(prevState => !prevState)}
 							>
 								<Icon
 									name={passNotVisible ? "eye-with-line" : "eye"}
@@ -171,7 +164,6 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 							disabled={loading}
 							onPress={() => {
 								emailLogin(emailId, password);
-								setLoading(true);
 							}}
 						>
 							{loading ? (
@@ -181,9 +173,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 							)}
 						</TouchableOpacity>
 						<TouchableOpacity
-							onPress={() => {
-								navigation.navigate("SignUp");
-							}}
+							onPress={() => navigation.navigate("SignUp")}
 							style={{ marginTop: 25 }}
 						>
 							<Text style={styles.signupBtnTxt}>New to this app? Sign UP!</Text>
@@ -241,6 +231,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
 		</View>
 	);
 }
+
 
 const styles = StyleSheet.create({
 	loginInput: {

@@ -1,24 +1,33 @@
-import "react-native-gesture-handler";
-import React, { useEffect, useState } from "react";
-import { LogBox } from "react-native";
-import HomeStackNavigator from "./components/navigators/HomeStackNavigator";
-import AppDrawerNavigator from "./components/navigators/AppDrawerNavigator";
-import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
+import "./gesture-handler";
+
+import { useCallback, useEffect, useState } from "react";
 import { enableScreens } from "react-native-screens";
-import firebase from "firebase";
+import * as SplashScreen from "expo-splash-screen"
+import { onAuthStateChanged } from "firebase/auth";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-LogBox.ignoreLogs([`Setting a timer for a long period`]);
-LogBox.ignoreLogs(["AsyncStorage has been extracted"])
+import { HomeStackNavigator } from "./navigators/HomeStackNavigator";
+import AppDrawerNavigator from "./navigators/AppDrawerNavigator";
+import { auth } from "./config";
 
-const Stack = createStackNavigator();
+import type { RootStackParamList } from "./navigators/types";
+
+SplashScreen.preventAutoHideAsync();
+
+SplashScreen.setOptions({
+	duration: 100,
+	fade: true,
+});
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-	const [isLoggedIn, setisLoggedIn] = useState(false);
+	const [isLoggedIn, setisLoggedIn] = useState<boolean | null>(null);
 
 	useEffect(() => {
-		enableScreens(true)
-		firebase.auth().onAuthStateChanged((user) => {
+		enableScreens(true);
+		onAuthStateChanged(auth, (user) => {
 			if (user) {
 				setisLoggedIn(true);
 			} else {
@@ -27,10 +36,20 @@ export default function App() {
 		});
 	});
 
+
+	const onReady = useCallback(() => {
+		if (isLoggedIn !== null) {
+			SplashScreen.hideAsync();
+		}
+	}, [isLoggedIn])
+
+	if (isLoggedIn === null) {
+		return null;
+	}
+
 	return (
-		<NavigationContainer>
-			<Stack.Navigator
-				detachInactiveScreens
+		<NavigationContainer onReady={onReady}>
+			<Stack.Navigator id={undefined}
 				screenOptions={{ headerShown: false }}
 			>
 				{isLoggedIn ? (

@@ -6,10 +6,13 @@ npm-debug.*
 *.key
 *.mobileprovision
 *.orig.*
+bun.lockb
 web-build/
+firebase/
 *.db
 .vscode/
 reset dependencies.bat
+google-services.json
 
 # macOS
 .DS_Store

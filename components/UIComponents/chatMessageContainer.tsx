@@ -1,4 +1,3 @@
-import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { RFValue } from "react-native-responsive-fontsize";
 import { decrypt as atob } from "../customBase64Encryption";
@@ -37,7 +36,7 @@ export default function ChatMessageContainer({
 						{atob(item.message)}
 					</Text>
 				) : item.media_type === "image" ? (
-					<ImageTiles navigation={navigation} item={item} />
+					<ImageTiles item={item} />
 				) : item.media_type === "audio" ? (
 					<ChatAudioPlayer item={item} />
 				) : null}

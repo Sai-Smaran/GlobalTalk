@@ -1,38 +1,62 @@
 {
-	"expo": {
-		"name": "GlobalTalk",
-		"slug": "gtalk",
-		"version": "0.2.3",
-		"orientation": "default",
-		"jsEngine": "hermes",
-		"scheme": "gtalk",
-		"primaryColor": "#6AA84F",
-		"description": "GlobalTalk is a platform in which you can talk to users publicly, or privately",
-		"icon": "./assets/icon.png",
-		"splash": {
-			"image": "./assets/splash.png",
-			"resizeMode": "contain",
-			"backgroundColor": "#6AA84F"
-		},
-		"updates": {
-			"enabled": true,
-			"fallbackToCacheTimeout": 0,
-			"checkAutomatically": "ON_LOAD"
-		},
-		"assetBundlePatterns": ["**/*"],
-		"ios": {
-			"supportsTablet": true
-		},
-		"android": {
-			"package": "com.sai.globaltalk",
-			"googleServicesFile": "./google-services.json",
-			"adaptiveIcon": {
-				"foregroundImage": "./assets/adaptive-icon.png",
-				"backgroundColor": "#6AA84F"
-			}
-		},
-		"web": {
-			"favicon": "./assets/favicon.png"
-		}
-	}
+  "expo": {
+    "name": "GlobalTalk",
+    "slug": "gtalk",
+    "version": "0.2.5",
+    "orientation": "default",
+    "jsEngine": "hermes",
+    "scheme": "gtalk",
+    "newArchEnabled": true,
+    "primaryColor": "#6AA84F",
+    "description": "GlobalTalk is a platform in which you can talk to users publicly, or privately",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6AA84F"
+    },
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD",
+      "url": "https://u.expo.dev/b3d41c21-1e5c-46cb-929f-5a97fe43f009"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.sai.globaltalk",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6AA84F"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b3d41c21-1e5c-46cb-929f-5a97fe43f009"
+      }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "backgroundColor": "#6AA84F",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ],
+      "expo-video"
+    ],
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    }
+  }
 }

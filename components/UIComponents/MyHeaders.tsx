@@ -1,6 +1,5 @@
-import React from "react";
-import { Header } from "react-native-elements";
-import { Icon } from "react-native-elements";
+import { Header } from "@rneui/base";
+import { Icon } from "@rneui/base";
 
 interface DrawerHeaderProps {
 	/*

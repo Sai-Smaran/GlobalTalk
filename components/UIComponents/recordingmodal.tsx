@@ -5,22 +5,159 @@ import {
 	TouchableOpacity,
 	StyleSheet,
 	useWindowDimensions,
+	Alert,
 } from "react-native";
-import React from "react";
-import Waves from "./waves";
 import { RFValue } from "react-native-responsive-fontsize";
+import { v4 as uuid } from "uuid";
+import Waves from "./waves";
 import CircularProgress from "./circular-progress";
+import { fstore, store } from "../../config";
+import { getDownloadURL, ref, StorageError, uploadBytesResumable, UploadTaskSnapshot } from "firebase/storage";
+import { addDoc, collection, doc, serverTimestamp } from "firebase/firestore";
+import { RecordingPresets, useAudioRecorder, AudioModule, useAudioRecorderState } from "expo-audio";
+import * as IntentLauncher from "expo-intent-launcher";
+import { useState } from "react";
 
-export default function RecordingModal({
+type RecordingModalProps = {
+	visible: boolean;
+	onCancel: () => void;
+	currentUserId: string;
+	otherUserId: string;
+}
+
+export function RecordingModal({
 	visible,
-	meter,
-	duration,
 	onCancel,
-	state,
-	progress,
-	onStopRecording,
-}) {
+	currentUserId,
+	otherUserId
+}: RecordingModalProps) {
+	const audioRecorder = useAudioRecorder({ ...RecordingPresets.LOW_QUALITY, isMeteringEnabled: true });
+	const recorderState = useAudioRecorderState(audioRecorder, 100)
 	const { width } = useWindowDimensions();
+
+	const [progress, setProgress] = useState(0);
+	const [modalState, setModalState] = useState<"recording" | "sending" | "fail">('recording');
+
+	async function startRecordAudio() {
+		try {
+			await audioRecorder.prepareToRecordAsync();
+			audioRecorder.record();
+		} catch (e) {
+			console.warn(e);
+		}
+	};
+
+	async function stopAndSendRecordAudio() {
+		audioRecorder.stop();
+		await sendRecording(recorderState.url);
+		// if (this.record !== undefined) {
+		// 	console.log("Stopping recording");
+		// 	await this.record.stopAndUnloadAsync();
+		// 	const uri = this.record.getURI();
+		// 	console.log("You may find your beautiful voice here: " + uri);
+		// 	this.setState({
+		// 		modalState: "sending",
+		// 	});
+		// 	if (uri !== null) {
+		// 		await sendRecording(uri);
+		// 	}
+		// 	this.record = undefined;
+		// }
+	};
+
+	async function stopRecordAudio() {
+		audioRecorder.stop();
+		// if (this.record !== undefined) {
+		// 	console.log("Stopping recording");
+		// 	await this.record.stopAndUnloadAsync();
+		// 	this.record = undefined;
+		// }
+		// this.setState({
+		// 	recordingModalVisible: false,
+		// });
+	};
+
+	async function sendRecording(uri: string) {
+		const response = await fetch(uri);
+		const blob = await response.blob();
+		const randomId = uuid();
+		const docId =
+			otherUserId > currentUserId
+				? currentUserId + "-" + otherUserId
+				: otherUserId + "-" + currentUserId;
+
+		const storageRef = ref(store, "shared_media/" + randomId);
+
+		const uploadTask = uploadBytesResumable(storageRef, blob);
+
+		const observer = (snap: UploadTaskSnapshot) => {
+			const uploadProgress = snap.bytesTransferred / snap.totalBytes;
+			setProgress(uploadProgress);
+		};
+
+		const errorHandler = (err: StorageError) => {
+			console.log(
+				`Something went wrong while sending voice message: ${err.message} /nError code: ${err.code}`
+			);
+
+			setModalState("fail");
+		};
+
+		const successHandler = () => {
+			getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+				const dq = doc(fstore, "chat_sessions", docId);
+				const cq = collection(dq, "messages");
+				addDoc(cq, {
+					created_at: serverTimestamp(),
+					media: url,
+					media_type: "audio",
+					looked: false,
+					sender_email: this.currentUserId,
+					profile_url: this.state.pfp,
+				}).then(() => {
+					setTimeout(() => {
+						unsubscribe();
+						setModalState("recording");
+					}, 5000);
+				});
+			});
+		}
+
+		let unsubscribe = uploadTask.on(
+			"state_changed",
+			observer,
+			errorHandler,
+			successHandler
+		);
+	};
+
+	async function handlePermissions() {
+		const { granted: recordingPermGranted } = await AudioModule.getRecordingPermissionsAsync();
+		if (!recordingPermGranted) {
+			await AudioModule.requestRecordingPermissionsAsync()
+				.then((resp) => {
+					if (!resp.granted) {
+						Alert.alert(
+							"Unable to record audio",
+							"Audio recording permissions are required to record your voice",
+							[{
+								text: "OK",
+								onPress: async () => {
+									await IntentLauncher.startActivityAsync(IntentLauncher.ActivityAction.APPLICATION_SETTINGS);
+								}
+							}]
+						)
+						onRequestClose();
+						return;
+					}
+				});
+		}
+	}
+
+	async function handleRecordingAsync() {
+		await handlePermissions();
+		await startRecordAudio()
+	}
 
 	function formatTimeString(time: number) {
 		let msecs: string | number = time % 1000;
@@ -38,11 +175,15 @@ export default function RecordingModal({
 		minutes = minutes - hours * 60;
 
 		let formatted: string;
-		formatted = `${hours < 10 ? 0 : ""}${hours}:${
-			minutes < 10 ? 0 : ""
-		}${minutes}:${seconds < 10 ? 0 : ""}${seconds}`;
+		formatted = `${hours < 10 ? 0 : ""}${hours}:${minutes < 10 ? 0 : ""
+			}${minutes}:${seconds < 10 ? 0 : ""}${seconds}`;
 
 		return formatted;
+	}
+
+	async function onRequestClose() {
+		await stopRecordAudio();
+		onCancel();
 	}
 
 	return (
@@ -50,8 +191,11 @@ export default function RecordingModal({
 			transparent
 			visible={visible}
 			collapsable
-			onRequestClose={onCancel}
+			onRequestClose={onRequestClose}
 			animationType="fade"
+			onShow={async () => {
+				await handleRecordingAsync();
+			}}
 		>
 			<View
 				style={{
@@ -61,7 +205,7 @@ export default function RecordingModal({
 					alignItems: "center",
 				}}
 			>
-				{state === "recording" ? (
+				{modalState === "recording" ? (
 					<View
 						style={[
 							styles.mainModal,
@@ -77,7 +221,7 @@ export default function RecordingModal({
 								alignItems: "center",
 							}}
 						>
-							<Waves loudness={meter} />
+							<Waves loudness={recorderState.metering} />
 						</View>
 						<View style={{ alignItems: "center", marginLeft: 50 }}>
 							<Text
@@ -87,10 +231,10 @@ export default function RecordingModal({
 									color: "gray",
 								}}
 							>
-								{formatTimeString(duration)}
+								{formatTimeString(recorderState.durationMillis)}
 							</Text>
 							<TouchableOpacity
-								onPress={onStopRecording}
+								onPress={stopAndSendRecordAudio}
 								style={styles.stopRecordButton}
 							>
 								<Text
@@ -105,14 +249,18 @@ export default function RecordingModal({
 							</TouchableOpacity>
 						</View>
 					</View>
-				) : state === "sending" ? (
+				) : modalState === "sending" ? (
 					<View style={styles.mainModal}>
 						<CircularProgress progress={progress} maxCount={1} />
 						<Text style={{ fontSize: RFValue(20), color: "darkgray" }}>
-							{progress === 1 ? "Uploaded Images" : "Uploading images"}
+							{progress === 1 ? "Uploaded Audio" : "Uploading Audio"}
 						</Text>
 					</View>
-				) : null}
+				) : (
+					<View style={styles.mainModal}>
+						<Text>Error</Text>
+					</View>
+				)}
 			</View>
 		</Modal>
 	);

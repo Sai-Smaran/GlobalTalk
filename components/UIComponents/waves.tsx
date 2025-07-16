@@ -1,5 +1,4 @@
 import { View, StyleSheet } from "react-native";
-import React from "react";
 import Animated, {
 	Extrapolation,
 	interpolate,
@@ -9,7 +8,7 @@ import Animated, {
 	withSpring,
 } from "react-native-reanimated";
 
-export default function Waves({ loudness }: { loudness: number }) {
+export default function Waves({ loudness }: { loudness?: number }) {
 	const height = useSharedValue(0);
 	const height1 = useSharedValue(0);
 	const height2 = useSharedValue(0);
@@ -18,7 +17,7 @@ export default function Waves({ loudness }: { loudness: number }) {
 	const height5 = useSharedValue(0);
 
 	useAnimatedReaction(
-		() => loudness,
+		() => loudness !== undefined ? loudness : -120,
 		(val) => {
 			height.value = interpolate(val, [-120, 0], [20, 400], {
 				extrapolateLeft: Extrapolation.CLAMP,
