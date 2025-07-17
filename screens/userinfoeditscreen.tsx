@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { useCallback, useState } from "react";
 import {
 	View,
 	Text,
@@ -6,13 +6,17 @@ import {
 	Modal,
 	TouchableOpacity,
 	Alert,
+	Pressable,
 } from "react-native";
-import { Avatar, Input, Icon, Divider } from "@rneui/base";
+import { Avatar, Input, Icon } from "@rneui/base";
 import {
 	getCameraPermissionsAsync,
 	requestCameraPermissionsAsync,
+	getMediaLibraryPermissionsAsync,
 	launchImageLibraryAsync,
 	launchCameraAsync,
+	CameraType,
+	requestMediaLibraryPermissionsAsync,
 } from "expo-image-picker";
 import { RFValue } from "react-native-responsive-fontsize";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
@@ -29,30 +33,24 @@ import { MyDrawerHeader } from "../components/UIComponents/MyHeaders";
 import { auth, fstore, store } from "../config";
 
 import type { DrawerStackScreenProps } from "../navigators/types";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
-interface State {
-	userId: string;
-	docId: string;
-	about: string;
-	image: "#" | string;
-	userName: string;
-	modalView: boolean;
-}
+export function UserInfoEditingScreen() {
+	const navigation =
+		useNavigation<DrawerStackScreenProps<"UserInfoEdit">["navigation"]>();
 
-export class UserInfoEditingScreen extends Component<DrawerStackScreenProps<'UserInfoEdit'>, State> {
-	constructor(props: DrawerStackScreenProps<"UserInfoEdit">) {
-		super(props)
-		this.state = {
-			userId: auth.currentUser !== null && auth.currentUser.email !== null ? auth.currentUser.email : "",
-			docId: "",
-			about: "",
-			image: "#",
-			userName: "",
-			modalView: false,
-		};
-	}
+	const [docId, setDocId] = useState("");
+	const [about, setAbout] = useState("");
+	const [image, setImage] = useState("#");
+	const [userName, setUserName] = useState("");
+	const [modalViewing, setModalViewing] = useState(false);
 
-	getCameraPermissions = async () => {
+	const userId =
+		auth.currentUser !== null && auth.currentUser.email !== null
+			? auth.currentUser.email
+			: "";
+
+	const getCameraPermissions = async () => {
 		const { status: existingStatus } = await getCameraPermissionsAsync();
 		let finalStatus = existingStatus;
 		if (finalStatus !== "granted") {
@@ -66,10 +64,27 @@ export class UserInfoEditingScreen extends Component<DrawerStackScreenProps<'Use
 			);
 			return;
 		}
-		await this.takePicture();
+		await takePicture();
 	};
 
-	generateKeywords = (userName: string) => {
+	const getMediaLibraryPermissions = async () => {
+		const { status: existingStatus } = await getMediaLibraryPermissionsAsync();
+		let finalStatus = existingStatus;
+		if (finalStatus !== "granted") {
+			const { status } = await requestMediaLibraryPermissionsAsync();
+			finalStatus = status;
+		}
+		if (finalStatus === "denied") {
+			Alert.alert(
+				"Can't take photos",
+				"Camera permissions are required to take a photo"
+			);
+			return;
+		}
+		await selectPicture();
+	};
+
+	const generateKeywords = (userName: string) => {
 		const wordArr = userName.toLowerCase().split(" ");
 		const searchableKeywords: any[] = [];
 		let prevKey = "";
@@ -86,142 +101,142 @@ export class UserInfoEditingScreen extends Component<DrawerStackScreenProps<'Use
 		return searchableKeywords;
 	};
 
-	takePicture = async () => {
-		//@ts-ignore
-		const { cancelled, uri } = await launchCameraAsync({
+	const takePicture = async () => {
+		const { canceled, assets } = await launchCameraAsync({
 			mediaTypes: ["images"],
 			allowsEditing: true,
 			aspect: [1, 1],
 			quality: 0.9,
-
+			cameraType: CameraType.front,
+			allowsMultipleSelection: false,
 		});
 
-		if (!cancelled) {
-			this.setState({ modalView: false });
-			this.uploadImage(uri, this.state.userId);
-			this.fetchImage(this.state.userName);
+		if (!canceled) {
+			await uploadImage(assets[0].uri, userId);
+			fetchImage(userName);
 		}
+		setModalViewing((prev) => !prev);
 	};
 
-	selectPicture = async () => {
-		//@ts-ignore
-		const { cancelled, uri } = await launchImageLibraryAsync({
+	const selectPicture = async () => {
+		const { canceled, assets } = await launchImageLibraryAsync({
 			mediaTypes: ["images"],
 			allowsEditing: true,
 			aspect: [1, 1],
 			quality: 0.9,
-
+			selectionLimit: 1,
+			allowsMultipleSelection: false,
 		});
 
-		if (!cancelled) {
-			this.setState({ modalView: false });
-			this.uploadImage(uri, this.state.userId);
-			this.fetchImage(this.state.userName);
+		if (!canceled) {
+			await uploadImage(assets[0].uri, userId);
+			fetchImage(userName);
 		}
+		setModalViewing((prev) => !prev);
 	};
 
-	uploadImage = async (uri: string, imageName: string) => {
+	const uploadImage = async (uri: string, imageName: string) => {
 		const response = await fetch(uri);
 		const blob = await response.blob();
 
 		const storageRef = ref(store, "user_profiles/" + imageName);
 
 		return await uploadBytes(storageRef, blob).then(() => {
-			this.fetchImage(imageName);
-			console.log("upload Successful")
+			fetchImage(imageName);
+			console.log("upload Successful");
 		});
 	};
 
-	fetchImage = (imageName: string) => {
+	const fetchImage = (imageName: string) => {
 		const storageRef = ref(store, "user_profiles/" + imageName);
 
 		getDownloadURL(storageRef)
 			.then((url) => {
-				this.setState({ image: url });
+				setImage(url);
 			})
 			.catch((error) => {
-				this.setState({ image: "#" });
+				setImage("#");
 				console.log(error.code);
 			});
 	};
 
-	async getUserProfile() {
-		console.log("Fetching user info...")
-		const q = query(collection(fstore, "users"), where("email", "==", this.state.userId));
+	async function getUserProfile() {
+		console.log("Fetching user info...");
+		const q = query(collection(fstore, "users"), where("email", "==", userId));
 		await getDocs(q).then((query) => {
 			query.forEach((doc) => {
-				var data = doc.data();
-				this.setState({
-					userName: data.user_name,
-					about: data.about,
-					docId: doc.id,
-				});
+				const data = doc.data();
+				setUserName(data.user_name);
+				setAbout(data.about);
+				setDocId(doc.id);
 			});
 		});
 	}
 
-	async updateProfile(username: string, about: string) {
-		const q = doc(fstore, "users", this.state.docId);
+	async function updateProfile(username: string, about: string) {
+		const q = doc(fstore, "users", docId);
 		await updateDoc(q, {
 			user_name: username,
 			about: about,
-			profile_url: this.state.image,
-			searchable_keywords: this.generateKeywords(username),
+			profile_url: image,
+			searchable_keywords: generateKeywords(username),
 		});
 	}
 
-	componentDidMount() {
-		this.fetchImage(this.state.userId);
-		this.getUserProfile();
-	}
+	useFocusEffect(
+		useCallback(() => {
+			fetchImage(userId);
+			getUserProfile();
+		}, [])
+	);
 
-	editModal = () => (
+	const EditModal = () => (
 		<Modal
 			animationType="fade"
 			transparent
-			visible={this.state.modalView}
-			onRequestClose={() => this.setState({ modalView: false })}
+			// collapsable
+			visible={modalViewing}
+			onRequestClose={() => setModalViewing((prev) => !prev)}
 		>
+			<Pressable
+				style={{ backgroundColor: "rgba(0,0,0,0.5)", height: "100%" }}
+				onPress={() => setModalViewing((prev) => !prev)}
+			/>
 			<View
 				style={{
 					width: "100%",
 					height: "100%",
 					justifyContent: "center",
 					alignItems: "center",
+					position: "absolute",
 				}}
 			>
 				<View
 					style={{
 						backgroundColor: "whitesmoke",
-						width: "50%",
-						height: RFValue(80),
-						elevation: 16,
+						elevation: 15,
 					}}
 				>
 					<TouchableOpacity
 						style={styles.changePfpBtn}
 						onPress={async () => {
-							await this.takePicture();
+							await getCameraPermissions();
 						}}
 					>
 						<Icon name="add-a-photo" color="black" size={RFValue(25)} />
-						<Text style={{ fontSize: RFValue(10), left: 10 }}>
+						<Text style={{ fontSize: RFValue(20), left: 10 }}>
 							Take a picture
 						</Text>
 					</TouchableOpacity>
-					<Divider
-						orientation="horizontal"
-						style={{ width: "95%", alignSelf: "center" }}
-						width={1.5}
-					/>
+
 					<TouchableOpacity
 						style={styles.changePfpBtn}
 						onPress={async () => {
-							await this.selectPicture();
+							await getMediaLibraryPermissions();
 						}}
 					>
 						<Icon name="add-photo-alternate" color="black" size={RFValue(30)} />
-						<Text style={{ fontSize: RFValue(10), left: 10 }}>
+						<Text style={{ fontSize: RFValue(20), left: 10 }}>
 							Pick a photo from gallery
 						</Text>
 					</TouchableOpacity>
@@ -230,70 +245,58 @@ export class UserInfoEditingScreen extends Component<DrawerStackScreenProps<'Use
 		</Modal>
 	);
 
-	render() {
-		return (
-			<View style={{ flex: 1, alignItems: "center" }}>
-				{this.editModal()}
-				<MyDrawerHeader
-					title="Edit your profile"
-					onDrawerIconPress={() => this.props.navigation.openDrawer()}
-				/>
-				<Avatar
-					rounded
-					source={{
-						uri: this.state.image,
-					}}
-					onPress={() => this.setState({ modalView: true })}
-					size={"xlarge"}
-					title={this.state.image === "#" && this.state.userName.charAt(0).toUpperCase()}
-				/>
-				<Input
-					label="User name"
-					onChangeText={(text) =>
-						this.setState({
-							userName: text,
-						})
-					}
-					placeholder="What do you want to be called as?"
-					value={this.state.userName.trim()}
-					containerStyle={styles.inputStyle}
-				/>
-				<Input
-					label="About me"
-					onChangeText={(text) =>
-						this.setState({
-							about: text,
-						})
-					}
-					style={{
-						height: RFValue(200),
-						justifyContent: "flex-start",
-					}}
-					multiline
-					numberOfLines={8}
-					inputContainerStyle={{
-						borderWidth: 2,
-						borderRadius: 5,
-						borderBottomWidth: 2,
-						padding: 10,
-					}}
-					maxLength={50}
-					textAlignVertical="top"
-					containerStyle={styles.inputStyle}
-					placeholder="Describe yourself....."
-					value={this.state.about}
-				/>
-				<TouchableOpacity
-					style={styles.saveStyle}
-					onPress={() =>
-						this.updateProfile(this.state.userName, this.state.about)
-					}
-				>
-					<Text style={styles.saveTextStyle}>Save</Text>
-				</TouchableOpacity>
-			</View>
-		);
-	}
+	return (
+		<View style={{ flex: 1, alignItems: "center" }}>
+			<EditModal />
+			<MyDrawerHeader
+				title="Edit your profile"
+				onDrawerIconPress={() => navigation.openDrawer()}
+			/>
+			<Avatar
+				rounded
+				source={{
+					uri: image,
+				}}
+				onPress={() => setModalViewing((prev) => !prev)}
+				size={"xlarge"}
+				title={image === "#" && userName.charAt(0).toUpperCase()}
+			/>
+			<Input
+				label="User name"
+				onChangeText={(text) => setUserName(text)}
+				placeholder="What do you want to be called as?"
+				value={userName.trim()}
+				containerStyle={styles.inputStyle}
+			/>
+			<Input
+				label="About me"
+				onChangeText={(text) => setAbout(text)}
+				style={{
+					maxHeight: RFValue(200),
+					justifyContent: "flex-start",
+				}}
+				multiline
+				numberOfLines={8}
+				inputContainerStyle={{
+					borderWidth: 2,
+					borderRadius: 5,
+					borderBottomWidth: 2,
+					padding: 10,
+				}}
+				maxLength={50}
+				textAlignVertical="top"
+				containerStyle={styles.inputStyle}
+				placeholder="Describe yourself....."
+				value={about}
+			/>
+			<TouchableOpacity
+				style={styles.saveStyle}
+				onPress={() => updateProfile(userName, about)}
+			>
+				<Text style={styles.saveTextStyle}>Save</Text>
+			</TouchableOpacity>
+		</View>
+	);
 }
 
 const styles = StyleSheet.create({
